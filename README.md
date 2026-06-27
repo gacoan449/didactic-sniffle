@@ -1,21 +1,35 @@
-# Petani Desa Berkah
+# 🌾 Petani Desa Berkah
 
-Aplikasi supermarket desa berbasis Flutter.
+Aplikasi supermarket digital berbasis Flutter.
 
-## Target Fitur
+## Visi
 
-- Login Member
-- Harga subsidi otomatis
+Membantu masyarakat desa berbelanja kebutuhan dengan mudah dan terjangkau.
+
+## Fitur
+
+- Login Pembeli
+- Login Kasir
+- Login Pemilik
+- Belanja Online
 - QRIS
-- Keranjang Belanja
-- Checkout
-- Chat Real Time
+- Saldo
+- Voucher
+- Chat
 - Voice Call
 - Tracking Kurir
+- Multi Cabang
 - Dashboard Kasir
 - Dashboard Pemilik
 - AI Customer Service
-- Multi Cabang
 
-Developer:
-Putrasahid
+## Teknologi
+
+- Flutter
+- Firebase
+- Firestore
+- Firebase Auth
+- Firebase Storage
+- Firebase Messaging
+- Google Maps
+
