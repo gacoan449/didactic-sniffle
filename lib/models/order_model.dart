@@ -1,15 +1,23 @@
 class OrderModel {
-  final String id;
-  final String userId;
-  final List<String> produk;
-  final int total;
-  final String status;
+
+  String id;
+  String tanggal;
+  String status;
+  String alamat;
+  String pembayaran;
+  String kurir;
+  int total;
 
   OrderModel({
+
     required this.id,
-    required this.userId,
-    required this.produk,
-    required this.total,
+    required this.tanggal,
     required this.status,
+    required this.alamat,
+    required this.pembayaran,
+    required this.kurir,
+    required this.total,
+
   });
+
 }
