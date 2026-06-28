@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/cart_model.dart';
 
 import '../services/cart_service.dart';
 
@@ -38,8 +39,49 @@ class _CartScreenState extends State<CartScreen> {
               "Rp ${item.product.harga}"
             ),
 
-            trailing: Text(
-              "x${item.qty}"
+            trailing: Row(
+  mainAxisSize: MainAxisSize.min,
+  children: [
+
+    IconButton(
+      icon: const Icon(Icons.remove_circle_outline),
+      onPressed: () {
+        setState(() {
+          CartService.minus(item);
+        });
+      },
+    ),
+
+    Text(
+      "${item.qty}",
+      style: const TextStyle(
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+
+    IconButton(
+      icon: const Icon(Icons.add_circle_outline),
+      onPressed: () {
+        setState(() {
+          CartService.plus(item);
+        });
+      },
+    ),
+
+    IconButton(
+      icon: const Icon(
+        Icons.delete,
+        color: Colors.red,
+      ),
+      onPressed: () {
+        setState(() {
+          CartService.remove(item.product);
+        });
+      },
+    ),
+
+  ],
+),
             ),
 
           );
@@ -50,26 +92,75 @@ class _CartScreenState extends State<CartScreen> {
 
       bottomNavigationBar: Container(
 
-        padding: const EdgeInsets.all(15),
+  padding: const EdgeInsets.all(15),
 
-        child: Text(
+  decoration: const BoxDecoration(
+    color: Colors.white,
+    boxShadow: [
+      BoxShadow(
+        blurRadius: 6,
+        color: Colors.black12,
+      )
+    ],
+  ),
 
-          "Total : Rp ${CartService.total}",
+  child: Column(
 
-          style: const TextStyle(
+    mainAxisSize: MainAxisSize.min,
 
-            fontSize:20,
+    children: [
 
-            fontWeight: FontWeight.bold,
+      Row(
 
+        mainAxisAlignment:
+            MainAxisAlignment.spaceBetween,
+
+        children: [
+
+          const Text(
+            "Total Belanja",
+            style: TextStyle(fontSize: 18),
+          ),
+
+          Text(
+            "Rp ${CartService.total}",
+            style: const TextStyle(
+              fontSize: 22,
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+        ],
+
+      ),
+
+      const SizedBox(height:15),
+
+      SizedBox(
+
+        width: double.infinity,
+
+        child: ElevatedButton(
+
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange,
+            minimumSize: const Size(0, 50),
+          ),
+
+          onPressed: () {},
+
+          child: const Text(
+            "Checkout",
+            style: TextStyle(fontSize: 18),
           ),
 
         ),
 
       ),
 
-    );
+    ],
 
-  }
+  ),
 
-}
+),
