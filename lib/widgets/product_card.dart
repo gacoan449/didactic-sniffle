@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/product_model.dart';
+import '../screens/product_detail_screen.dart';
 
 class ProductCard extends StatelessWidget {
 
@@ -13,7 +14,27 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    return Card(
+    return InkWell(
+
+  onTap: () {
+
+    Navigator.push(
+
+      context,
+
+      MaterialPageRoute(
+
+        builder: (_) => ProductDetailScreen(
+          product: product,
+        ),
+
+      ),
+
+    );
+
+  },
+
+  child: Card(
 
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
@@ -77,7 +98,7 @@ class ProductCard extends StatelessWidget {
 
           ],
         ),
-      ),
+    ),
     );
   }
 }
