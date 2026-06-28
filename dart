@@ -1,0 +1,1 @@
+/data/data/com.termux/files/home/flutter/bin/cache/dart-sdk/bin/dart
