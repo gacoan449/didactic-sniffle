@@ -1,3 +1,5 @@
+import 'checkout_screen.dart';
+
 import 'package:flutter/material.dart';
 import '../models/cart_model.dart';
 
@@ -148,7 +150,21 @@ class _CartScreenState extends State<CartScreen> {
             minimumSize: const Size(0, 50),
           ),
 
-          onPressed: () {},
+          onPressed: (){
+
+Navigator.push(
+
+context,
+
+MaterialPageRoute(
+
+builder:(_)=>const CheckoutScreen(),
+
+),
+
+);
+
+},
 
           child: const Text(
             "Checkout",
