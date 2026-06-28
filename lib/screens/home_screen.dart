@@ -1,3 +1,7 @@
+import '../models/product_model.dart';
+import '../services/product_service.dart';
+import '../widgets/product_card.dart';
+
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -102,50 +106,18 @@ class HomeScreen extends StatelessWidget {
           ),
 
           const SizedBox(height:15),
-
-          Container(
-            height:250,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-              color: Colors.grey.shade200,
-            ),
-            child: const Center(
-              child: Text("Grid Produk"),
-            ),
-          ),
-
-        ],
-      ),
-
-      bottomNavigationBar: NavigationBar(
-
-        selectedIndex:0,
-
-        destinations: const [
-
-          NavigationDestination(
-            icon: Icon(Icons.home),
-            label: "Beranda",
-          ),
-
-          NavigationDestination(
-            icon: Icon(Icons.category),
-            label: "Kategori",
-          ),
-
-          NavigationDestination(
-            icon: Icon(Icons.receipt_long),
-            label: "Pesanan",
-          ),
-
-          NavigationDestination(
-            icon: Icon(Icons.person),
-            label: "Akun",
-          ),
-
-        ],
-      ),
-
+ GridView.builder(
+  shrinkWrap: true,
+  physics: const NeverScrollableScrollPhysics(),
+  itemCount: ProductService.products.length,
+  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+    crossAxisCount: 2,
+    childAspectRatio: 0.72,
+  ),
+  itemBuilder: (context, index) {
+    return ProductCard(
+      product: ProductService.products[index],
     );
-  }
-}
+  },
+),
+
