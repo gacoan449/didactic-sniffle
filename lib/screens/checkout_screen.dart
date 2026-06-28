@@ -1,3 +1,6 @@
+import '../services/order_service.dart';
+import '../models/order_model.dart';
+
 import 'package:flutter/material.dart';
 import '../services/cart_service.dart';
 
@@ -229,42 +232,42 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
               ),
 
-              onPressed: () {
+              onPressed:(){
 
-                ScaffoldMessenger.of(context)
+OrderService.tambah(
 
-                    .showSnackBar(
+OrderModel(
 
-                  const SnackBar(
+id:DateTime.now().millisecondsSinceEpoch.toString(),
 
-                    content: Text(
+tanggal:DateTime.now().toString(),
 
-                        "Pesanan berhasil dibuat"),
+status:"Menunggu Konfirmasi",
 
-                  ),
+alamat:alamat.text,
 
-                );
+pembayaran:pembayaran,
 
-              },
+kurir:kurir,
 
-              child: const Text(
+total:total,
 
-                "BUAT PESANAN",
+),
 
-                style: TextStyle(fontSize:18),
+);
 
-              ),
+CartService.items.clear();
 
-            ),
+Navigator.pop(context);
 
-          )
+ScaffoldMessenger.of(context).showSnackBar(
 
-        ],
+const SnackBar(
 
-      ),
+content: Text("Pesanan berhasil dibuat"),
 
-    );
+),
 
-  }
+);
 
-}
+},
