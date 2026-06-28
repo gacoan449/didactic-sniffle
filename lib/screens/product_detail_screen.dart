@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/product_model.dart';
+import '../services/cart_service.dart';
 
 class ProductDetailScreen extends StatelessWidget {
   final ProductModel product;
@@ -102,7 +103,21 @@ class ProductDetailScreen extends StatelessWidget {
             Expanded(
               child: ElevatedButton(
 
-                onPressed: () {},
+                onPressed: () {
+
+  CartService.add(product);
+
+  ScaffoldMessenger.of(context).showSnackBar(
+
+    const SnackBar(
+
+      content: Text("Produk masuk ke keranjang"),
+
+    ),
+
+  );
+
+},
 
                 child: const Text("Tambah Keranjang"),
 
