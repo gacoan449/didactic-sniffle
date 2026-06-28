@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'pages/splash/splash_screen.dart';
 
 void main() {
   runApp(const PetaniDesaBerkah());
