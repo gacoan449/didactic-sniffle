@@ -1,3 +1,5 @@
+import 'chat_screen.dart';
+
 import '../services/cart_service.dart';
 import 'cart_screen.dart';
 
@@ -27,7 +29,17 @@ class HomeScreen extends StatelessWidget {
 
           SizedBox(width:15),
 
-          Icon(Icons.chat,color: Colors.white),
+          Navigator.push(
+
+context,
+
+MaterialPageRoute(
+
+builder:(_)=>const ChatScreen(),
+
+),
+
+);
 
           SizedBox(width:15),
 
