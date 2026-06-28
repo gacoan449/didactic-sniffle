@@ -1,0 +1,18 @@
+dependencies:
+  flutter:
+    sdk: flutter
+
+  firebase_core: ^3.15.0
+  firebase_auth: ^5.3.0
+  cloud_firestore: ^5.5.0
+  firebase_storage: ^12.3.0
+  firebase_messaging: ^15.1.0
+  firebase_analytics: ^11.3.0
+
+  image_picker: ^1.1.2
+  cached_network_image: ^3.4.1
+  flutter_rating_bar: ^4.0.1
+  google_maps_flutter: ^2.10.0
+  geolocator: ^13.0.2
+  flutter_webrtc: ^0.12.10
+  qr_flutter: ^4.1.0
