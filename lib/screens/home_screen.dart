@@ -1,3 +1,6 @@
+import '../services/cart_service.dart';
+import 'cart_screen.dart';
+
 import '../models/product_model.dart';
 import '../services/product_service.dart';
 import '../widgets/product_card.dart';
@@ -18,7 +21,7 @@ class HomeScreen extends StatelessWidget {
           "Petani Desa Berkah",
           style: TextStyle(color: Colors.white),
         ),
-        actions: const [
+        actions:[
 
           Icon(Icons.notifications,color: Colors.white),
 
@@ -28,7 +31,41 @@ class HomeScreen extends StatelessWidget {
 
           SizedBox(width:15),
 
-          Icon(Icons.shopping_cart,color: Colors.white),
+          Stack(
+  children: [
+    IconButton(
+      icon: const Icon(Icons.shopping_cart, color: Colors.white),
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const CartScreen(),
+          ),
+        );
+      },
+    ),
+    if (CartService.items.isNotEmpty)
+      Positioned(
+        right: 3,
+        top: 3,
+        child: Container(
+          padding: const EdgeInsets.all(4),
+          decoration: const BoxDecoration(
+            color: Colors.red,
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            "${CartService.items.length}",
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+            ),
+          ),
+        ),
+      ),
+  ],
+),
+
 
           SizedBox(width:15),
 
