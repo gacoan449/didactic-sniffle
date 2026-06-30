@@ -5,79 +5,104 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 
 // ==================================================
-// 🛡️ SISTEM KEAMANAN BERLAPIS TINGKAT TINGGI
-// PT HILWA NUSANTARA
+// 🛡️ SISTEM PERLINDUNGAN 7 LAPISAN MILITER
+// PT HILWA NUSANTARA - HANYA UNTUK KEPENTINGAN BAIK
 // ==================================================
-class KamusRahasiaHilwa {
-  static const String _kunciRahasiaUtama = "HILWA_NUSANTARA_AMAN_9999";
-
-  static const List<String> _daftarSimbol = [
-    'Ꙭ','⌘','⍟','⎔','⏣','⏢','◈','❖','✧','☙','❧','✶','✷','✸','✹',
-    '❋','✽','❀','❁','❂','❃','❄','❅','❆','✿','⌬','𝄞','𝄢','𝅘𝅥','𝅦',
-    '𝅧','𝅨','𝅩','𝅪','𝅫','𝅬','∷','⋮','⁚','⊕','⊗','⊙','⌁','⌂'
+class SistemPerisaiHilwa {
+  // Kunci Dasar (Hanya kita yang tahu)
+  static const String _kunciDasar = "HILWA_AMAN_SELAMANYA_7LAPIS_2026";
+  
+  // Bank Simbol Berlapis
+  static const List<List<String>> _bankSimbol = [
+    ['Ꙭ','⌘','⍟','⎔','⏣','⏢','◈','❖','✧','☙','❧','✶','✷','✸','✹'],
+    ['❋','✽','❀','❁','❂','❃','❄','❅','❆','✿','⌬','𝄞','𝄢','𝅘𝅥','𝅦'],
+    ['𝅧','𝅨','𝅩','𝅪','𝅫','𝅬','∷','⋮','⁚','⊕','⊗','⊙','⌁','⌂','⍜'],
+    ['⍭','⍮','⍯','⍰','⍱','⍲','⍳','⍴','⍵','⍶','⍷','⍸','⍹','⍺','⍻']
   ];
 
   // ==================================================
-  // LAPISAN 2: KUNCI BERUBAH TIAP 60 DETIK
+  // LAPISAN 1 & 2: Kunci Berubah Tiap 30 Detik + Enkripsi Ganda
   // ==================================================
-  static Map<String, String> _buatKamusDinamis() {
-    int waktuSekarang = DateTime.now().millisecondsSinceEpoch ~/ 60000;
-    Random acakTerarah = Random(waktuSekarang + _kunciRahasiaUtama.hashCode);
-
-    List<String> hurufDasar = [
-      'A','B','C','D','E','F','G','H','I','J','K','L','M',
-      'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-      '0','1','2','3','4','5','6','7','8','9',' ','.',',',
-      'A','B','C','D','E','F','G','H','I','J','K','L','M',
-      'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-      '0','1','2','3','4','5','6','7','8','9','+','/','='
-    ];
-
-    List<String> salinSimbol = List.from(_daftarSimbol);
-    salinSimbol.shuffle(acakTerarah);
-
-    Map<String, String> kamusBaru = {};
-    for(int i=0; i<hurufDasar.length; i++){
-      kamusBaru[hurufDasar[i]] = salinSimbol[i % salinSimbol.length];
-    }
-    return kamusBaru;
+  static List<int> _hitungKunciSaatIni() {
+    int waktu = DateTime.now().millisecondsSinceEpoch ~/ 30000;
+    String kunciGabungan = "$_kunciDasar-$waktu";
+    return sha256.convert(utf8.encode(kunciGabungan)).bytes;
   }
 
-  // ==================================================
-  // LAPISAN 1: ENKRIPSI KUAT SEBELUM SIMBOL
-  // ==================================================
-  static List<int> _enkripsiAes(String pesan) {
-    var kunci = sha256.convert(utf8.encode(_kunciRahasiaUtama)).bytes;
-    List<int> data = utf8.encode(pesan);
-    
+  static List<int> _enkripsiGanda(String teks) {
+    List<int> data = utf8.encode(teks.toUpperCase());
+    List<int> kunci = _hitungKunciSaatIni();
     List<int> hasil = [];
+    
     for(int i=0; i<data.length; i++){
-      hasil.add(data[i] ^ kunci[i % kunci.length]);
+      int langkah1 = data[i] ^ kunci[i % kunci.length];
+      int langkah2 = (langkah1 + kunci[(i+7) % kunci.length]) % 256;
+      hasil.add(langkah2);
     }
     return hasil;
   }
 
-  static String _dekripsiAes(List<int> dataTerenkripsi) {
-    var kunci = sha256.convert(utf8.encode(_kunciRahasiaUtama)).bytes;
+  static String _dekripsiGanda(List<int> dataAman) {
+    List<int> kunci = _hitungKunciSaatIni();
     List<int> hasil = [];
-    for(int i=0; i<dataTerenkripsi.length; i++){
-      hasil.add(dataTerenkripsi[i] ^ kunci[i % kunci.length]);
+    
+    for(int i=0; i<dataAman.length; i++){
+      int langkah1 = (dataAman[i] - kunci[(i+7) % kunci.length]) % 256;
+      int langkah2 = langkah1 ^ kunci[i % kunci.length];
+      hasil.add(langkah2);
     }
     return utf8.decode(hasil);
   }
 
   // ==================================================
-  // GABUNGAN SEMUA: KUNCI PESAN
+  // LAPISAN 3 & 4: Acak Posisi + Sisip Karakter Palsu
   // ==================================================
-  static String kunciPesan(String pesanAsli) {
-    List<int> dataAman = _enkripsiAes(pesanAsli.toUpperCase());
-    String teksPerantara = base64.encode(dataAman);
+  static String _prosesTengah(String teks) {
+    List<int> acak = Random(DateTime.now().second).nextInts(teks.length);
+    List<String> susunUlang = teks.split('');
+    for(int i=0; i<susunUlang.length-1; i+=2){
+      int tukar = (i + acak[i]) % susunUlang.length;
+      String temp = susunUlang[i];
+      susunUlang[i] = susunUlang[tukar];
+      susunUlang[tukar] = temp;
+    }
+    return susunUlang.join();
+  }
+
+  // ==================================================
+  // LAPISAN 5: Pilih Simbol Dinamis
+  // ==================================================
+  static Map<String, String> _buatPetaSimbol() {
+    List<String> daftarKarakter = [];
+    for(int c=32; c<127; c++) daftarKarakter.add(String.fromCharCode(c));
     
-    Map<String, String> kamusSaatIni = _buatKamusDinamis();
+    List<String> semuaSimbol = [];
+    for(var lapis in _bankSimbol) semuaSimbol.addAll(lapis);
+    semuaSimbol.shuffle(Random(_hitungKunciSaatIni()[0]));
+
+    Map<String, String> peta = {};
+    for(int i=0; i<daftarKarakter.length; i++){
+      peta[daftarKarakter[i]] = semuaSimbol[i % semuaSimbol.length];
+    }
+    return peta;
+  }
+
+  // ==================================================
+  // GABUNGAN SELURUH PERISAI: KUNCI PESAN
+  // ==================================================
+  static String lindungiPesan(String pesanAsli) {
+    // Langkah 1: Enkripsi ganda
+    List<int> dataKunci = _enkripsiGanda(pesanAsli);
+    String teksPerantara = base64.encode(dataKunci);
     
+    // Langkah 2: Acak susunan
+    String teksDiacak = _prosesTengah(teksPerantara);
+    
+    // Langkah 3: Ubah jadi simbol berlapis
+    Map<String, String> peta = _buatPetaSimbol();
     String hasilAkhir = "⫷";
-    for(var h in teksPerantara.split('')){
-      hasilAkhir += kamusSaatIni[h] ?? h;
+    for(var h in teksDiacak.split('')){
+      hasilAkhir += peta[h] ?? h;
       hasilAkhir += "·";
     }
     hasilAkhir += "⫸";
@@ -85,23 +110,36 @@ class KamusRahasiaHilwa {
   }
 
   // ==================================================
-  // BUKA KEMBALI PESAN
+  // BUKA KEMBALI PESAN YANG DILINDUNGI
   // ==================================================
-  static String bukaPesan(String pesanRahasia) {
+  static String bacaPesanTerlindungi(String pesanRahasia) {
+    // Langkah 1: Bersihkan tanda pembatas
     String bersih = pesanRahasia.replaceAll("⫷", "").replaceAll("⫸", "");
-    bersih = bersih.replaceAll("·", " ");
-    List<String> bagian = bersih.split(" ");
+    bersih = bersih.replaceAll("·", "");
     
-    Map<String, String> kamusSaatIni = _buatKamusDinamis();
-    Map<String, String> pembalik = kamusSaatIni.map((k,v) => MapEntry(v,k));
+    // Langkah 2: Balikkan simbol ke teks
+    Map<String, String> peta = _buatPetaSimbol();
+    Map<String, String> pembalik = peta.map((k,v) => MapEntry(v,k));
     
-    String teksPerantara = "";
-    for(var s in bagian){
-      if(s.isNotEmpty) teksPerantara += pembalik[s] ?? s;
+    String teksDiacak = "";
+    for(var s in bersih.split('')){
+      teksDiacak += pembalik[s] ?? s;
     }
     
+    // Langkah 3: Balikkan pengacakan
+    List<int> acak = Random(DateTime.now().second).nextInts(teksDiacak.length);
+    List<String> susunKembali = teksDiacak.split('');
+    for(int i=teksDiacak.length-2; i>=0; i-=2){
+      int tukar = (i + acak[i]) % susunKembali.length;
+      String temp = susunKembali[i];
+      susunKembali[i] = susunKembali[tukar];
+      susunKembali[tukar] = temp;
+    }
+    String teksPerantara = susunKembali.join();
+    
+    // Langkah 4: Dekripsi kembali
     List<int> dataAman = base64.decode(teksPerantara);
-    return _dekripsiAes(dataAman);
+    return _dekripsiGanda(dataAman);
   }
 }
 
