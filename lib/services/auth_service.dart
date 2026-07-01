@@ -1,44 +1,73 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/auth_model.dart';
+import '../models/pengguna_model.dart';
 import 'firebase_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = LayananFirebase.auth;
   final FirebaseFirestore _db = LayananFirebase.db;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  Future<User?> daftar(AuthModel data, String sandi) async {
-    try {
-      final akun = await _auth.createUserWithEmailAndPassword(
-        email: data.email,
-        password: sandi,
-      );
-      
-      // Kirim email verifikasi
-      await akun.user!.sendEmailVerification();
+  User? get penggunaSaatIni => _auth.currentUser;
+  Stream<User?> get aliranPengguna => _auth.authStateChanges();
 
-      await _db.collection('pengguna').doc(akun.user!.uid).set(
-        data.keMap()..['uid'] = akun.user!.uid,
-      );
-      return akun.user;
-    } catch (e) { debugPrint('Error Daftar: $e'); rethrow; }
+  Future<User> daftar(String email, String sandi, String nama) async {
+    final kredensial = await _auth.createUserWithEmailAndPassword(email: email, password: sandi);
+    final uid = kredensial.user!.uid;
+
+    await kredensial.user!.updateDisplayName(nama);
+    await kredensial.user!.reload();
+
+    await _db.collection('pengguna').doc(uid).set({
+      'nama': nama,
+      'email': email,
+      'noHp': '',
+      'fotoUrl': '',
+      'dibuatPada': FieldValue.serverTimestamp(),
+    });
+
+    return kredensial.user!;
   }
 
-  Future<User?> masuk(String email, String sandi) async {
-    try {
-      final akun = await _auth.signInWithEmailAndPassword(
-        email: email, password: sandi,
-      );
-      // Cek apakah email sudah diverifikasi
-      if (!akun.user!.emailVerified) {
-        await _auth.signOut();
-        throw 'Silakan cek email Anda untuk verifikasi akun terlebih dahulu';
-      }
-      return akun.user;
-    } catch (e) { debugPrint('Error Masuk: $e'); rethrow; }
+  Future<User> masuk(String email, String sandi) async {
+    final kredensial = await _auth.signInWithEmailAndPassword(email: email, password: sandi);
+    return kredensial.user!;
   }
 
-  Future<void> keluar() async => await _auth.signOut();
-  Stream<User?> get status => _auth.authStateChanges();
+  Future<User> masukGoogle() async {
+    final akunGoogle = await _googleSignIn.signIn();
+    if(akunGoogle == null) throw 'Masuk dibatalkan';
+
+    final authGoogle = await akunGoogle.authentication;
+    final kredensial = GoogleAuthProvider.credential(
+      accessToken: authGoogle.accessToken,
+      idToken: authGoogle.idToken,
+    );
+
+    final hasil = await _auth.signInWithCredential(kredensial);
+    final user = hasil.user!;
+
+    final doc = await _db.collection('pengguna').doc(user.uid).get();
+    if(!doc.exists) {
+      await _db.collection('pengguna').doc(user.uid).set({
+        'nama': user.displayName ?? 'Pengguna Baru',
+        'email': user.email ?? '',
+        'noHp': '',
+        'fotoUrl': user.photoURL ?? '',
+        'dibuatPada': FieldValue.serverTimestamp(),
+      });
+    }
+
+    return user;
+  }
+
+  Future<void> keluar() async {
+    await _googleSignIn.signOut();
+    await _auth.signOut();
+  }
+
+  Future<void> lupaSandi(String email) async {
+    await _auth.sendPasswordResetEmail(email: email);
+  }
 }

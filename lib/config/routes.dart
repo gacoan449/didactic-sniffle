@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import '../screens/splash.dart';
 import '../screens/auth/masuk.dart';
 import '../screens/auth/daftar.dart';
+import '../screens/auth/lupa_sandi.dart';
 import '../screens/umum/pengendali_menu.dart';
 import '../screens/umum/profil.dart';
 import '../screens/umum/produk_daftar.dart';
@@ -23,6 +24,7 @@ final AppRoutes = GoRouter(
     GoRoute(path: '/', builder: (c, s) => const SplashScreen()),
     GoRoute(path: '/masuk', builder: (c, s) => const HalamanMasuk()),
     GoRoute(path: '/daftar', builder: (c, s) => const HalamanDaftar()),
+    GoRoute(path: '/lupa-sandi', builder: (c, s) => const HalamanLupaSandi()),
     GoRoute(path: '/beranda', builder: (c, s) => const PengendaliMenu()),
     GoRoute(path: '/profil', builder: (c, s) => const HalamanProfil()),
     GoRoute(path: '/ubah-profil', builder: (c, s) => HalamanUbahProfil(pengguna: s.extra as PenggunaModel?)),
