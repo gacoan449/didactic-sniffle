@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum StatusProduk { draft, menungguVerifikasi, disetujui, ditolak, nonaktif }
+
 class VariasiProdukModel {
   final String nama;
   final String nilai;
@@ -42,7 +44,10 @@ class ProdukModel {
   final String kategoriNama;
   final String penjualId;
   final String namaToko;
-  final double harga;
+  final double hargaAcuan;
+  final double hargaMinimum;
+  final double hargaMaksimum;
+  final double hargaJual;
   final double hargaDiskon;
   final int stok;
   final int jumlahTerjual;
@@ -54,6 +59,8 @@ class ProdukModel {
   final List<VariasiProdukModel> variasi;
   final double rating;
   final int jumlahUlasan;
+  final StatusProduk status;
+  final String catatanAdmin;
   final DateTime dibuatPada;
   final DateTime? berlakuPromoSampai;
 
@@ -70,7 +77,10 @@ class ProdukModel {
     required this.kategoriNama,
     required this.penjualId,
     required this.namaToko,
-    required this.harga,
+    required this.hargaAcuan,
+    required this.hargaMinimum,
+    required this.hargaMaksimum,
+    required this.hargaJual,
     required this.hargaDiskon,
     required this.stok,
     required this.jumlahTerjual,
@@ -82,11 +92,12 @@ class ProdukModel {
     required this.variasi,
     required this.rating,
     required this.jumlahUlasan,
+    required this.status,
+    required this.catatanAdmin,
     required this.dibuatPada,
     this.berlakuPromoSampai,
   });
 
-  // ✅ Getter agar kompatibel dengan semua kode lama
   String get gambarUtama => gambarUrl.isNotEmpty ? gambarUrl.first : '';
 
   Map<String, dynamic> keMap() => {
@@ -101,7 +112,10 @@ class ProdukModel {
     'kategoriNama': kategoriNama,
     'penjualId': penjualId,
     'namaToko': namaToko,
-    'harga': harga,
+    'hargaAcuan': hargaAcuan,
+    'hargaMinimum': hargaMinimum,
+    'hargaMaksimum': hargaMaksimum,
+    'hargaJual': hargaJual,
     'hargaDiskon': hargaDiskon,
     'stok': stok,
     'jumlahTerjual': jumlahTerjual,
@@ -113,6 +127,8 @@ class ProdukModel {
     'variasi': variasi.map((v) => v.keMap()).toList(),
     'rating': rating,
     'jumlahUlasan': jumlahUlasan,
+    'status': status.name,
+    'catatanAdmin': catatanAdmin,
     'dibuatPada': Timestamp.fromDate(dibuatPada),
     'berlakuPromoSampai': berlakuPromoSampai == null
         ? null
@@ -133,12 +149,17 @@ class ProdukModel {
         kategoriNama: map['kategoriNama']?.toString() ?? 'Lainnya',
         penjualId: map['penjualId']?.toString() ?? '',
         namaToko: map['namaToko']?.toString() ?? 'Toko Petani',
-        harga: (map['harga'] as num?)?.toDouble() ?? 0,
+        hargaAcuan: (map['hargaAcuan'] as num?)?.toDouble() ?? 0,
+        hargaMinimum: (map['hargaMinimum'] as num?)?.toDouble() ?? 0,
+        hargaMaksimum: (map['hargaMaksimum'] as num?)?.toDouble() ?? 0,
+        hargaJual: (map['hargaJual'] as num?)?.toDouble() ?? 0,
         hargaDiskon: (map['hargaDiskon'] as num?)?.toDouble() ?? 0,
         stok: (map['stok'] as num?)?.toInt() ?? 0,
         jumlahTerjual: (map['jumlahTerjual'] as num?)?.toInt() ?? 0,
         organik: map['organik'] == true,
-        tersedia: map['tersedia'] != false,
+        tersedia:
+            map['tersedia'] != false &&
+            map['status'] == StatusProduk.disetujui.name,
         flashSale: map['flashSale'] == true,
         produkBaru: map['produkBaru'] == true,
         terlaris: map['terlaris'] == true,
@@ -147,6 +168,11 @@ class ProdukModel {
         ),
         rating: (map['rating'] as num?)?.toDouble() ?? 0,
         jumlahUlasan: (map['jumlahUlasan'] as num?)?.toInt() ?? 0,
+        status: StatusProduk.values.firstWhere(
+          (e) => e.name == map['status'],
+          orElse: () => StatusProduk.draft,
+        ),
+        catatanAdmin: map['catatanAdmin']?.toString() ?? '',
         dibuatPada:
             (map['dibuatPada'] as Timestamp?)?.toDate() ?? DateTime.now(),
         berlakuPromoSampai: (map['berlakuPromoSampai'] as Timestamp?)?.toDate(),
