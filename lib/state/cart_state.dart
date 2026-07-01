@@ -1,9 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/cart_model.dart';
 
-final cartStateProvider = StateNotifierProvider<CartStateNotifier, List<CartModel>>((ref) {
-  return CartStateNotifier();
-});
+final cartStateProvider =
+    StateNotifierProvider<CartStateNotifier, List<CartModel>>((ref) {
+      return CartStateNotifier();
+    });
 
 class CartStateNotifier extends StateNotifier<List<CartModel>> {
   CartStateNotifier() : super([]);
@@ -34,5 +35,6 @@ class CartStateNotifier extends StateNotifier<List<CartModel>> {
   }
 
   int get jumlah => state.length;
-  double get totalHarga => state.fold(0, (total, item) => total + (item.harga * item.jumlah));
+  double get totalHarga =>
+      state.fold(0, (total, item) => total + (item.harga * item.jumlah));
 }

@@ -5,8 +5,7 @@ class CartService {
   static final List<CartModel> items = [];
 
   static void add(ProductModel product) {
-    int index =
-        items.indexWhere((e) => e.product.id == product.id);
+    int index = items.indexWhere((e) => e.product.id == product.id);
 
     if (index >= 0) {
       items[index].qty++;

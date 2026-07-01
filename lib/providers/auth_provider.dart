@@ -2,38 +2,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 
-final authProvider = NotifierProvider<AuthNotifier, AsyncValue<User?>>(AuthNotifier.new);
+final authProvider = NotifierProvider<AuthNotifier, AsyncValue<User?>>(
+  AuthNotifier.new,
+);
 
 class AuthNotifier extends Notifier<AsyncValue<User?>> {
-  final _layanan = AuthService();
-  StreamSubscription<User?>? _langganan;
+  StreamSubscription<User?>? _langgananAuth;
 
   @override
   AsyncValue<User?> build() {
-    _langganan = _layanan.aliranPengguna.listen((user) {
-      state = AsyncValue.data(user);
+    state = const AsyncValue.loading();
+    _langgananAuth = AuthService().aliranPengguna.listen(
+      (user) {
+        state = AsyncValue.data(user);
+      },
+      onError: (e, s) {
+        state = AsyncValue.error(e, s);
+      },
+    );
+
+    // Batalkan langganan otomatis saat provider dibuang
+    ref.onDispose(() {
+      _langgananAuth?.cancel();
     });
-    ref.onDispose(() => _langganan?.cancel());
-    return const AsyncValue.loading();
-  }
 
-  Future<void> daftar(String email, String sandi, String nama) async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _layanan.daftar(email, sandi, nama));
-  }
-
-  Future<void> masuk(String email, String sandi) async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _layanan.masuk(email, sandi));
-  }
-
-  Future<void> masukGoogle() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _layanan.masukGoogle());
-  }
-
-  Future<void> keluar() async {
-    await _layanan.keluar();
-    state = const AsyncValue.data(null);
+    return const AsyncValue.data(null);
   }
 }

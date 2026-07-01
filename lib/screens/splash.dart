@@ -24,19 +24,31 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   Future<void> jalankanAlurPengecekan() async {
     try {
-      setState(() { langkah = 1; pesan = 'Memeriksa koneksi...'; });
+      setState(() {
+        langkah = 1;
+        pesan = 'Memeriksa koneksi...';
+      });
       await Future.delayed(const Duration(milliseconds: 300));
 
-      setState(() { langkah = 2; pesan = 'Memeriksa status sistem...'; });
+      setState(() {
+        langkah = 2;
+        pesan = 'Memeriksa status sistem...';
+      });
       if (await CekLayanan.cekPemeliharaan()) {
         tampilkanPesan(AppConfig.pesanPemeliharaan);
         return;
       }
 
-      setState(() { langkah = 3; pesan = 'Menyiapkan aplikasi...'; });
+      setState(() {
+        langkah = 3;
+        pesan = 'Menyiapkan aplikasi...';
+      });
       await Future.delayed(const Duration(milliseconds: 800));
 
-      setState(() { langkah = 4; pesan = 'Selesai!'; });
+      setState(() {
+        langkah = 4;
+        pesan = 'Selesai!';
+      });
       await Future.delayed(const Duration(milliseconds: 300));
 
       if (mounted) {
@@ -80,7 +92,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             const SizedBox(height: 16),
             Text(
               AppConfig.namaAplikasi,
-              style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             Text(

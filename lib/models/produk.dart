@@ -208,10 +208,7 @@ class ProductModel {
     };
   }
 
-  factory ProductModel.fromMap(
-      Map<String, dynamic> data,
-      String id,
-      ) {
+  factory ProductModel.fromMap(Map<String, dynamic> data, String id) {
     return ProductModel(
       id: id,
       nama: data["nama"] ?? "",
@@ -272,10 +269,12 @@ class ProductModel {
           : null,
 
       createdAt: DateTime.fromMillisecondsSinceEpoch(
-          data["createdAt"] ?? DateTime.now().millisecondsSinceEpoch),
+        data["createdAt"] ?? DateTime.now().millisecondsSinceEpoch,
+      ),
 
       updatedAt: DateTime.fromMillisecondsSinceEpoch(
-          data["updatedAt"] ?? DateTime.now().millisecondsSinceEpoch),
+        data["updatedAt"] ?? DateTime.now().millisecondsSinceEpoch,
+      ),
     );
   }
 }

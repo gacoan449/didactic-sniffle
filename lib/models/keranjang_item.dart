@@ -19,8 +19,13 @@ class KeranjangItem {
 
   KeranjangItem ubahJumlah(int baru) {
     return KeranjangItem(
-      produkId: produkId, nama: nama, harga: harga,
-      jumlah: baru, satuan: satuan, gambarUrl: gambarUrl, stokTersedia: stokTersedia
+      produkId: produkId,
+      nama: nama,
+      harga: harga,
+      jumlah: baru,
+      satuan: satuan,
+      gambarUrl: gambarUrl,
+      stokTersedia: stokTersedia,
     );
   }
 
@@ -34,7 +39,7 @@ class KeranjangItem {
     'stokTersedia': stokTersedia,
   };
 
-  factory KeranjangItem.dariMap(Map<String,dynamic> map) {
+  factory KeranjangItem.dariMap(Map<String, dynamic> map) {
     return KeranjangItem(
       produkId: map['produkId']?.toString() ?? '',
       nama: map['nama']?.toString() ?? '',

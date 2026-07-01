@@ -6,14 +6,9 @@ class CategoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Kategori"),
-      ),
+      appBar: AppBar(title: const Text("Kategori")),
       body: const Center(
-        child: Text(
-          "Halaman Kategori",
-          style: TextStyle(fontSize: 22),
-        ),
+        child: Text("Halaman Kategori", style: TextStyle(fontSize: 22)),
       ),
     );
   }

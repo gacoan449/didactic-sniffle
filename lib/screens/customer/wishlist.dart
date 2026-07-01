@@ -16,33 +16,53 @@ class HalamanWishlist extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final data = ref.watch(daftarWishlistProvider);
-    final formatHarga = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final formatHarga = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Produk Favorit')),
       body: data.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e,s) => Center(child: Text('Gagal memuat: $e')),
+        error: (e, s) => Center(child: Text('Gagal memuat: $e')),
         data: (daftar) {
-          if(daftar.isEmpty) {
+          if (daftar.isEmpty) {
             return Center(
-              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Icon(Icons.favorite_border, size: 80, color: Colors.grey[300]),
-                const SizedBox(height: 16),
-                const Text('Belum ada produk favorit', style: TextStyle(fontSize: 16, color: Colors.grey)),
-                const SizedBox(height: 8),
-                TextButton(onPressed: () => context.go('/beranda'), child: const Text('Mulai Belanja Sekarang'))
-              ]),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.favorite_border,
+                    size: 80,
+                    color: Colors.grey[300],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Belum ada produk favorit',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => context.go('/beranda'),
+                    child: const Text('Mulai Belanja Sekarang'),
+                  ),
+                ],
+              ),
             );
           }
           return GridView.builder(
             padding: const EdgeInsets.all(12),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2, childAspectRatio: 0.72,
-              crossAxisSpacing: 10, mainAxisSpacing: 10,
+              crossAxisCount: 2,
+              childAspectRatio: 0.72,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
             ),
             itemCount: daftar.length,
-            itemBuilder: (c, i) => _KartuProduk(item: daftar[i], formatHarga: formatHarga),
+            itemBuilder: (c, i) =>
+                _KartuProduk(item: daftar[i], formatHarga: formatHarga),
           );
         },
       ),
@@ -67,27 +87,41 @@ class _KartuProduk extends ConsumerWidget {
               fit: StackFit.expand,
               children: [
                 CachedNetworkImage(
-                  imageUrl: item.gambar, fit: BoxFit.cover,
-                  placeholder: (c,u) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                  errorWidget: (c,u,e) => const Icon(Icons.image, size: 40, color: Colors.grey),
+                  imageUrl: item.gambar,
+                  fit: BoxFit.cover,
+                  placeholder: (c, u) => const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  errorWidget: (c, u, e) =>
+                      const Icon(Icons.image, size: 40, color: Colors.grey),
                 ),
                 Positioned(
-                  top: 4, right: 4,
+                  top: 4,
+                  right: 4,
                   child: InkWell(
                     onTap: () async {
                       await WishlistService().hapus(item.produkId);
                       ref.invalidate(daftarWishlistProvider);
-                      if(context.mounted) {
+                      if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Dihapus dari favorit'), duration: Duration(seconds: 1))
+                          const SnackBar(
+                            content: Text('Dihapus dari favorit'),
+                            duration: Duration(seconds: 1),
+                          ),
                         );
                       }
                     },
                     child: const CircleAvatar(
-                      radius: 16, backgroundColor: Colors.white70,
+                      radius: 16,
+                      backgroundColor: Colors.white70,
                       child: AnimatedSwitcher(
                         duration: Duration(milliseconds: 250),
-                        child: Icon(Icons.favorite, key: ValueKey('suka'), color: Colors.red, size: 18),
+                        child: Icon(
+                          Icons.favorite,
+                          key: ValueKey('suka'),
+                          color: Colors.red,
+                          size: 18,
+                        ),
                       ),
                     ),
                   ),
@@ -100,26 +134,52 @@ class _KartuProduk extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.namaProduk, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
+                Text(
+                  item.namaProduk,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 13),
+                ),
                 const SizedBox(height: 4),
-                Text(formatHarga.format(item.harga), style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.warnaUtama)),
+                Text(
+                  formatHarga.format(item.harga),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.warnaUtama,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 8)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
                     icon: const Icon(Icons.add_shopping_cart, size: 16),
-                    label: const Text('+ Keranjang', style: TextStyle(fontSize: 12)),
+                    label: const Text(
+                      '+ Keranjang',
+                      style: TextStyle(fontSize: 12),
+                    ),
                     onPressed: () {
-                      ref.read(keranjangProvider.notifier).tambah(
-                        ProdukModel(
-                          id: item.produkId, nama: item.namaProduk,
-                          gambarUrl: item.gambar, harga: item.harga, stok: 999,
-                          deskripsi: '', kategori: '', satuan: 'buah',
-                        ),
-                      );
+                      ref
+                          .read(keranjangProvider.notifier)
+                          .tambah(
+                            ProdukModel(
+                              id: item.produkId,
+                              nama: item.namaProduk,
+                              gambarUrl: item.gambar,
+                              harga: item.harga,
+                              stok: 999,
+                              deskripsi: '',
+                              kategori: '',
+                              satuan: 'buah',
+                            ),
+                          );
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Ditambahkan ke keranjang'), duration: Duration(seconds: 1))
+                        const SnackBar(
+                          content: Text('Ditambahkan ke keranjang'),
+                          duration: Duration(seconds: 1),
+                        ),
                       );
                     },
                   ),

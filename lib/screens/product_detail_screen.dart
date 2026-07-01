@@ -5,24 +5,17 @@ import '../services/cart_service.dart';
 class ProductDetailScreen extends StatelessWidget {
   final ProductModel product;
 
-  const ProductDetailScreen({
-    super.key,
-    required this.product,
-  });
+  const ProductDetailScreen({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(product.nama),
-        backgroundColor: Colors.green,
-      ),
+      appBar: AppBar(title: Text(product.nama), backgroundColor: Colors.green),
 
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             Container(
               height: 280,
               width: double.infinity,
@@ -41,7 +34,6 @@ class ProductDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
 
                 children: [
-
                   Text(
                     product.nama,
                     style: const TextStyle(
@@ -50,18 +42,18 @@ class ProductDetailScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height:10),
+                  const SizedBox(height: 10),
 
                   Text(
                     "Rp ${product.harga}",
                     style: const TextStyle(
-                      fontSize:22,
+                      fontSize: 22,
                       color: Colors.red,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
 
-                  const SizedBox(height:10),
+                  const SizedBox(height: 10),
 
                   Text("Stok : ${product.stok}"),
 
@@ -69,23 +61,19 @@ class ProductDetailScreen extends StatelessWidget {
 
                   Text("Diskon : ${product.diskon}%"),
 
-                  const SizedBox(height:20),
+                  const SizedBox(height: 20),
 
                   const Text(
                     "Deskripsi Produk",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize:18,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
 
-                  const SizedBox(height:10),
+                  const SizedBox(height: 10),
 
                   const Text(
                     "Produk segar langsung dari Petani Desa Berkah. "
                     "Dipanen setiap hari sehingga kualitas tetap terjaga.",
                   ),
-
                 ],
               ),
             ),
@@ -97,46 +85,30 @@ class ProductDetailScreen extends StatelessWidget {
         padding: const EdgeInsets.all(12),
 
         child: Row(
-
           children: [
-
             Expanded(
               child: ElevatedButton(
-
                 onPressed: () {
+                  CartService.add(product);
 
-  CartService.add(product);
-
-  ScaffoldMessenger.of(context).showSnackBar(
-
-    const SnackBar(
-
-      content: Text("Produk masuk ke keranjang"),
-
-    ),
-
-  );
-
-},
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Produk masuk ke keranjang")),
+                  );
+                },
 
                 child: const Text("Tambah Keranjang"),
-
               ),
             ),
 
-            const SizedBox(width:10),
+            const SizedBox(width: 10),
 
             Expanded(
               child: ElevatedButton(
-
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
 
                 onPressed: () {},
 
                 child: const Text("Beli Sekarang"),
-
               ),
             ),
           ],

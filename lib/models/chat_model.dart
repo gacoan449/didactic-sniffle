@@ -1,5 +1,4 @@
 class ChatModel {
-
   final String pengirim;
   final String penerima;
   final String pesan;
@@ -9,7 +8,6 @@ class ChatModel {
   final String? orderId;
 
   ChatModel({
-
     required this.pengirim,
     required this.penerima,
     required this.pesan,
@@ -18,7 +16,5 @@ class ChatModel {
 
     this.foto,
     this.orderId,
-
   });
-
 }

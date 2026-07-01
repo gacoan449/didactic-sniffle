@@ -2,7 +2,6 @@ import '../models/product_model.dart';
 
 class ProductService {
   static List<ProductModel> products = [
-
     ProductModel(
       id: "1",
       nama: "Bayam Segar",
@@ -42,6 +41,5 @@ class ProductService {
       rating: 4.8,
       diskon: 20,
     ),
-
   ];
 }

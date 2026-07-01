@@ -25,7 +25,11 @@ class _HalamanCheckoutState extends ConsumerState<HalamanCheckout> {
   static const double ongkir = 10000;
 
   String formatUang(double angka) {
-    return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(angka);
+    return NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    ).format(angka);
   }
 
   @override
@@ -36,115 +40,187 @@ class _HalamanCheckoutState extends ConsumerState<HalamanCheckout> {
 
     // Isi otomatis alamat utama jika belum dipilih
     daftarAlamat.whenData((alamat) {
-      if(alamatPilih == null && alamat.isNotEmpty) {
-        setState(() => alamatPilih = alamat.firstWhere((a) => a.utama, orElse: () => alamat.first));
+      if (alamatPilih == null && alamat.isNotEmpty) {
+        setState(
+          () => alamatPilih = alamat.firstWhere(
+            (a) => a.utama,
+            orElse: () => alamat.first,
+          ),
+        );
       }
     });
 
     return Scaffold(
       appBar: AppBar(title: const Text('Checkout Pesanan')),
       body: daftarKeranjang.isEmpty
-        ? const Center(child: Text('Keranjang kosong, tidak bisa lanjut checkout'))
-        : ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              const Text('Alamat Pengiriman', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(height: 10),
-              Card(
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () async {
-                    final terpilih = await context.push<AlamatModel>('/daftar-alamat', extra: true);
-                    if(terpilih != null) setState(() => alamatPilih = terpilih);
-                  },
+          ? const Center(
+              child: Text('Keranjang kosong, tidak bisa lanjut checkout'),
+            )
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                const Text(
+                  'Alamat Pengiriman',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 10),
+                Card(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () async {
+                      final terpilih = await context.push<AlamatModel>(
+                        '/daftar-alamat',
+                        extra: true,
+                      );
+                      if (terpilih != null)
+                        setState(() => alamatPilih = terpilih);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: alamatPilih == null
+                                ? const Text(
+                                    'Pilih Alamat Pengiriman',
+                                    style: TextStyle(color: Colors.grey),
+                                  )
+                                : Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${alamatPilih!.namaPenerima} - ${alamatPilih!.noHp}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        alamatPilih!.alamatLengkap(),
+                                        style: TextStyle(
+                                          color: Colors.grey[700],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                          const Icon(Icons.chevron_right),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                const Text(
+                  'Ringkasan Belanja',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 10),
+                Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Row(
+                    child: Column(
                       children: [
-                        Expanded(
-                          child: alamatPilih == null
-                            ? const Text('Pilih Alamat Pengiriman', style: TextStyle(color: Colors.grey))
-                            : Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                        ...daftarKeranjang.map(
+                          (b) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('${alamatPilih!.namaPenerima} - ${alamatPilih!.noHp}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 4),
-                                Text(alamatPilih!.alamatLengkap(), style: TextStyle(color: Colors.grey[700])),
+                                Expanded(
+                                  child: Text(
+                                    '${b.nama} x ${b.jumlah} ${b.satuan}',
+                                  ),
+                                ),
+                                Text(formatUang(b.totalHarga)),
                               ],
                             ),
+                          ),
                         ),
-                        const Icon(Icons.chevron_right),
+                        const Divider(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Total Belanja'),
+                            Text(formatUang(keranjang.totalSemua)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Ongkos Kirim'),
+                            Text(formatUang(ongkir)),
+                          ],
+                        ),
+                        const Divider(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Total Pembayaran',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            Text(
+                              formatUang(keranjang.totalSemua + ongkir),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: AppTheme.warnaUtama,
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              const Text('Ringkasan Belanja', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(height: 10),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
+                const Text(
+                  'Metode Pembayaran',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 10),
+                Card(
                   child: Column(
                     children: [
-                      ...daftarKeranjang.map((b) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(child: Text('${b.nama} x ${b.jumlah} ${b.satuan}')),
-                            Text(formatUang(b.totalHarga)),
-                          ],
-                        ),
-                      )),
-                      const Divider(height: 16),
-                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Total Belanja'), Text(formatUang(keranjang.totalSemua))]),
-                      const SizedBox(height: 8),
-                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Ongkos Kirim'), Text(formatUang(ongkir))]),
-                      const Divider(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Total Pembayaran', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          Text(formatUang(keranjang.totalSemua + ongkir), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.warnaUtama)),
-                        ],
+                      RadioListTile<String>(
+                        title: const Text('Transfer Bank'),
+                        value: 'Transfer Bank',
+                        groupValue: metodeBayarPilih,
+                        onChanged: (v) => setState(() => metodeBayarPilih = v!),
+                      ),
+                      RadioListTile<String>(
+                        title: const Text('Bayar di Tempat'),
+                        value: 'Bayar di Tempat',
+                        groupValue: metodeBayarPilih,
+                        onChanged: (v) => setState(() => metodeBayarPilih = v!),
                       ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-
-              const Text('Metode Pembayaran', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(height: 10),
-              Card(
-                child: Column(
-                  children: [
-                    RadioListTile<String>(
-                      title: const Text('Transfer Bank'),
-                      value: 'Transfer Bank',
-                      groupValue: metodeBayarPilih,
-                      onChanged: (v) => setState(() => metodeBayarPilih = v!),
-                    ),
-                    RadioListTile<String>(
-                      title: const Text('Bayar di Tempat'),
-                      value: 'Bayar di Tempat',
-                      groupValue: metodeBayarPilih,
-                      onChanged: (v) => setState(() => metodeBayarPilih = v!),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 30),
-            ],
-          ),
+                const SizedBox(height: 30),
+              ],
+            ),
 
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: Colors.white, boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, -2))
-        ]),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
         child: SafeArea(
           child: Row(
             children: [
@@ -154,7 +230,14 @@ class _HalamanCheckoutState extends ConsumerState<HalamanCheckout> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Total', style: TextStyle(fontSize: 12)),
-                    Text(formatUang(keranjang.totalSemua + ongkir), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.warnaUtama)),
+                    Text(
+                      formatUang(keranjang.totalSemua + ongkir),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: AppTheme.warnaUtama,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -162,8 +245,18 @@ class _HalamanCheckoutState extends ConsumerState<HalamanCheckout> {
               ElevatedButton(
                 onPressed: sedangKirim ? null : prosesPesanan,
                 child: sedangKirim
-                  ? const SizedBox(width:20, height:20, child: CircularProgressIndicator(strokeWidth:2, color: Colors.white))
-                  : const Text('PESAN SEKARANG', style: TextStyle(fontSize: 16)),
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'PESAN SEKARANG',
+                        style: TextStyle(fontSize: 16),
+                      ),
               ),
             ],
           ),
@@ -173,17 +266,27 @@ class _HalamanCheckoutState extends ConsumerState<HalamanCheckout> {
   }
 
   Future<void> prosesPesanan() async {
-    if(!mounted) return;
+    if (!mounted) return;
 
-    if(alamatPilih == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Silakan pilih alamat pengiriman terlebih dahulu'), backgroundColor: Colors.orange));
+    if (alamatPilih == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan pilih alamat pengiriman terlebih dahulu'),
+          backgroundColor: Colors.orange,
+        ),
+      );
       return;
     }
 
     final keranjang = ref.read(keranjangProvider.notifier);
     final daftarKeranjang = ref.read(keranjangProvider);
-    if(daftarKeranjang.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Keranjang belanja masih kosong'), backgroundColor: Colors.orange));
+    if (daftarKeranjang.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Keranjang belanja masih kosong'),
+          backgroundColor: Colors.orange,
+        ),
+      );
       return;
     }
 
@@ -191,7 +294,7 @@ class _HalamanCheckoutState extends ConsumerState<HalamanCheckout> {
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if(user == null) throw 'Pengguna belum masuk';
+      if (user == null) throw 'Pengguna belum masuk';
 
       final pesanan = PesananModel(
         noPesanan: '',
@@ -209,18 +312,21 @@ class _HalamanCheckoutState extends ConsumerState<HalamanCheckout> {
       await PesananService().buatPesanan(pesanan);
       await keranjang.kosongkan();
 
-      if(!mounted) return;
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pesanan berhasil dibuat!'), backgroundColor: Colors.green)
+        const SnackBar(
+          content: Text('Pesanan berhasil dibuat!'),
+          backgroundColor: Colors.green,
+        ),
       );
       context.go('/beranda');
     } catch (e) {
-      if(!mounted) return;
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.red)
+        SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.red),
       );
     } finally {
-      if(mounted) setState(() => sedangKirim = false);
+      if (mounted) setState(() => sedangKirim = false);
     }
   }
 }

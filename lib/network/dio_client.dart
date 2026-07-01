@@ -6,18 +6,25 @@ import 'api_client.dart';
 import 'interceptor.dart';
 
 class DioClient extends ApiClient {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: dotenv.env['API_URL'] ?? AppConfig.apiUrl,
-    connectTimeout: AppConfig.timeoutServer,
-    receiveTimeout: AppConfig.timeoutServer,
-  ));
+  final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: dotenv.env['API_URL'] ?? AppConfig.apiUrl,
+      connectTimeout: AppConfig.timeoutServer,
+      receiveTimeout: AppConfig.timeoutServer,
+    ),
+  );
 
   DioClient() {
     _dio.interceptors.add(AppInterceptor());
     if (!AppConfig.modeDebug) return;
-    _dio.interceptors.add(PrettyDioLogger(
-      requestHeader: true, requestBody: true, responseHeader: true, responseBody: true,
-    ));
+    _dio.interceptors.add(
+      PrettyDioLogger(
+        requestHeader: true,
+        requestBody: true,
+        responseHeader: true,
+        responseBody: true,
+      ),
+    );
   }
 
   @override

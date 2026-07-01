@@ -2,15 +2,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/keranjang_item.dart';
 import '../services/keranjang_service.dart';
 
-final keranjangServiceProvider = Provider<KeranjangService>((ref) => KeranjangService());
+final keranjangServiceProvider = Provider<KeranjangService>(
+  (ref) => KeranjangService(),
+);
 
-final keranjangProvider = StateNotifierProvider<KeranjangNotifier, List<KeranjangItem>>((ref) {
-  return KeranjangNotifier(ref.watch(keranjangServiceProvider));
-});
+final keranjangProvider =
+    StateNotifierProvider<KeranjangNotifier, List<KeranjangItem>>((ref) {
+      return KeranjangNotifier(ref.watch(keranjangServiceProvider));
+    });
 
 class KeranjangNotifier extends StateNotifier<List<KeranjangItem>> {
   final KeranjangService _lay;
-  KeranjangNotifier(this._lay) : super([]) { muatDariDb(); }
+  KeranjangNotifier(this._lay) : super([]) {
+    muatDariDb();
+  }
 
   Future<void> muatDariDb() async {
     state = await _lay.ambilSemua();
@@ -23,7 +28,9 @@ class KeranjangNotifier extends StateNotifier<List<KeranjangItem>> {
     if (ada >= 0) {
       final lama = state[ada];
       barangBaru = lama.ubahJumlah(
-        lama.jumlah + 1 <= lama.stokTersedia ? lama.jumlah + 1 : lama.stokTersedia
+        lama.jumlah + 1 <= lama.stokTersedia
+            ? lama.jumlah + 1
+            : lama.stokTersedia,
       );
       state = [...state]..[ada] = barangBaru;
     } else {

@@ -18,10 +18,15 @@ class AppInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     AppLogger.error('ERR: ${err.message}', err.stackTrace);
-    handler.reject(DioException(
-      requestOptions: err.requestOptions,
-      response: err.response,
-      error: ApiException(err.message ?? 'Kesalahan Jaringan', kode: err.response?.statusCode),
-    ));
+    handler.reject(
+      DioException(
+        requestOptions: err.requestOptions,
+        response: err.response,
+        error: ApiException(
+          err.message ?? 'Kesalahan Jaringan',
+          kode: err.response?.statusCode,
+        ),
+      ),
+    );
   }
 }

@@ -18,7 +18,12 @@ class PenggunaModel {
   });
 
   factory PenggunaModel.kosong() => PenggunaModel(
-    id: '', nama: '', email: '', noHp: '', fotoUrl: '', dibuatPada: DateTime.now()
+    id: '',
+    nama: '',
+    email: '',
+    noHp: '',
+    fotoUrl: '',
+    dibuatPada: DateTime.now(),
   );
 
   Map<String, dynamic> keMap() => {
@@ -29,7 +34,7 @@ class PenggunaModel {
     'dibuatPada': dibuatPada,
   };
 
-  factory PenggunaModel.dariMap(Map<String,dynamic> map, String docId) {
+  factory PenggunaModel.dariMap(Map<String, dynamic> map, String docId) {
     return PenggunaModel(
       id: docId,
       nama: map['nama']?.toString() ?? '',

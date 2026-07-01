@@ -21,9 +21,21 @@ class _PengendaliMenuState extends ConsumerState<PengendaliMenu> {
 
   final List<MenuItem> daftarMenu = const [
     MenuItem(judul: 'Beranda', ikon: Icons.home, halaman: HalamanUtama()),
-    MenuItem(judul: 'Kategori', ikon: Icons.category, halaman: HalamanKategori()),
-    MenuItem(judul: 'Keranjang', ikon: Icons.shopping_cart, halaman: HalamanKeranjang()),
-    MenuItem(judul: 'Pesanan', ikon: Icons.receipt_long, halaman: HalamanPesanan()),
+    MenuItem(
+      judul: 'Kategori',
+      ikon: Icons.category,
+      halaman: HalamanKategori(),
+    ),
+    MenuItem(
+      judul: 'Keranjang',
+      ikon: Icons.shopping_cart,
+      halaman: HalamanKeranjang(),
+    ),
+    MenuItem(
+      judul: 'Pesanan',
+      ikon: Icons.receipt_long,
+      halaman: HalamanPesanan(),
+    ),
     MenuItem(judul: 'Akun', ikon: Icons.person, halaman: HalamanAkun()),
   ];
 
@@ -43,8 +55,14 @@ class _PengendaliMenuState extends ConsumerState<PengendaliMenu> {
           int indeks = daftarMenu.indexOf(menu);
           return BottomNavigationBarItem(
             icon: indeks == 2
-              ? Badge(label: Text(jumlahKeranjang.toString(), style: const TextStyle(color: Colors.white, fontSize: 10)), child: Icon(menu.ikon))
-              : Icon(menu.ikon),
+                ? Badge(
+                    label: Text(
+                      jumlahKeranjang.toString(),
+                      style: const TextStyle(color: Colors.white, fontSize: 10),
+                    ),
+                    child: Icon(menu.ikon),
+                  )
+                : Icon(menu.ikon),
             label: menu.judul,
           );
         }).toList(),

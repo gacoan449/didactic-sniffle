@@ -17,72 +17,98 @@ class AuthService {
   Stream<User?> get aliranPengguna => _auth.authStateChanges();
 
   Future<User> daftar(String email, String sandi, String nama) async {
-    final kredensial = await _auth.createUserWithEmailAndPassword(email: email, password: sandi);
+    final kredensial = await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: sandi,
+    );
     final uid = kredensial.user!.uid;
     await kredensial.user!.updateDisplayName(nama);
     await kredensial.user!.reload();
     await _db.collection('pengguna').doc(uid).set({
-      'nama': nama, 'email': email, 'noHp': '', 'fotoUrl': '', 'dibuatPada': FieldValue.serverTimestamp(),
-    });
+      'nama': nama,
+      'email': email,
+      'noHp': '',
+      'fotoUrl': '',
+      'dibuatPada': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
     return kredensial.user!;
   }
 
   Future<User> masuk(String email, String sandi) async {
-    return (await _auth.signInWithEmailAndPassword(email: email, password: sandi)).user!;
+    return (await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: sandi,
+    )).user!;
   }
 
   Future<User> masukGoogle() async {
-    // TIDAK lagi memanggil signOut() agar akun tersimpan
+    // TIDAK memanggil signOut() agar akun tersimpan
     final akunGoogle = await _googleSignIn.signIn();
-    if(akunGoogle == null) throw 'Masuk dibatalkan';
+    if (akunGoogle == null) throw 'Masuk dibatalkan';
     final authGoogle = await akunGoogle.authentication;
     final kredensial = GoogleAuthProvider.credential(
-      accessToken: authGoogle.accessToken, idToken: authGoogle.idToken,
+      accessToken: authGoogle.accessToken,
+      idToken: authGoogle.idToken,
     );
     final hasil = await _auth.signInWithCredential(kredensial);
     final user = hasil.user!;
     final doc = await _db.collection('pengguna').doc(user.uid).get();
-    if(!doc.exists) {
+    if (!doc.exists) {
       await _db.collection('pengguna').doc(user.uid).set({
-        'nama': user.displayName ?? 'Pengguna Baru', 'email': user.email ?? '',
-        'noHp': '', 'fotoUrl': user.photoURL ?? '', 'dibuatPada': FieldValue.serverTimestamp(),
-      });
+        'nama': user.displayName ?? 'Pengguna Baru',
+        'email': user.email ?? '',
+        'noHp': '',
+        'fotoUrl': user.photoURL ?? '',
+        'dibuatPada': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
     }
     return user;
   }
 
-  Future<void> kirimOTP(String nomorHp, VerifikasiKode saatKirim, ErrorAuth saatError) async {
+  Future<void> kirimOTP(
+    String nomorHp,
+    VerifikasiKode saatKirim,
+    ErrorAuth saatError,
+  ) async {
     await _auth.verifyPhoneNumber(
       phoneNumber: nomorHp,
-      verificationCompleted: (cred) async => await _auth.signInWithCredential(cred),
+      verificationCompleted: (cred) async =>
+          await _auth.signInWithCredential(cred),
       verificationFailed: (e) => saatError(e.message ?? 'Terjadi kesalahan'),
       codeSent: (verifikasiId, _) => saatKirim(verifikasiId),
       codeAutoRetrievalTimeout: (verifikasiId) {},
     );
   }
 
-  Future<User> verifikasiOTP(String verifikasiId, String kode, String nomorHp) async {
-    final kredensial = PhoneAuthProvider.credential(verificationId: verifikasiId, smsCode: kode);
+  Future<User> verifikasiOTP(
+    String verifikasiId,
+    String kode,
+    String nomorHp,
+  ) async {
+    final kredensial = PhoneAuthProvider.credential(
+      verificationId: verifikasiId,
+      smsCode: kode,
+    );
     final hasil = await _auth.signInWithCredential(kredensial);
     final user = hasil.user!;
     final doc = await _db.collection('pengguna').doc(user.uid).get();
-    if(!doc.exists) {
+    if (!doc.exists) {
       await _db.collection('pengguna').doc(user.uid).set({
-        'nama': 'Pengguna ${nomorHp.replaceAll('+62', '0')}',
+        'nama': 'Pengguna',
         'email': '',
         'noHp': nomorHp,
         'fotoUrl': '',
         'dibuatPada': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
     }
     return user;
   }
 
   Future<void> ubahSandi(String sandiLama, String sandiBaru) async {
     final user = _auth.currentUser;
-    if(user == null) throw 'Harus masuk terlebih dahulu';
+    if (user == null) throw 'Harus masuk terlebih dahulu';
     final email = user.email;
-    if(email == null) throw 'Akun ini tidak bisa ubah sandi';
+    if (email == null) throw 'Akun ini tidak bisa ubah sandi';
     await _auth.signInWithEmailAndPassword(email: email, password: sandiLama);
     await user.updatePassword(sandiBaru);
     await user.reload();

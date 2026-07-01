@@ -1,5 +1,4 @@
 class OrderModel {
-
   String id;
   String tanggal;
   String status;
@@ -9,7 +8,6 @@ class OrderModel {
   int total;
 
   OrderModel({
-
     required this.id,
     required this.tanggal,
     required this.status,
@@ -17,7 +15,5 @@ class OrderModel {
     required this.pembayaran,
     required this.kurir,
     required this.total,
-
   });
-
 }

@@ -13,25 +13,24 @@ class LoginScreen extends StatelessWidget {
             padding: const EdgeInsets.all(25),
             child: Column(
               children: [
-
                 const Icon(
                   Icons.shopping_basket,
                   size: 90,
                   color: Colors.white,
                 ),
 
-                const SizedBox(height:20),
+                const SizedBox(height: 20),
 
                 const Text(
                   "PETANI DESA BERKAH",
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize:28,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
 
-                const SizedBox(height:40),
+                const SizedBox(height: 40),
 
                 TextField(
                   decoration: InputDecoration(
@@ -44,7 +43,7 @@ class LoginScreen extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height:15),
+                const SizedBox(height: 15),
 
                 TextField(
                   obscureText: true,
@@ -58,29 +57,28 @@ class LoginScreen extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height:25),
+                const SizedBox(height: 25),
 
                 SizedBox(
                   width: double.infinity,
                   height: 55,
                   child: ElevatedButton(
-                    onPressed: (){
+                    onPressed: () {
                       Navigator.pushReplacementNamed(context, "/home");
                     },
                     child: const Text("MASUK"),
                   ),
                 ),
 
-                const SizedBox(height:10),
+                const SizedBox(height: 10),
 
                 TextButton(
-                  onPressed: (){},
+                  onPressed: () {},
                   child: const Text(
                     "Daftar Akun Baru",
                     style: TextStyle(color: Colors.white),
                   ),
-                )
-
+                ),
               ],
             ),
           ),

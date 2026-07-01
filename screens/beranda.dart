@@ -53,7 +53,9 @@ class _HalamanUtamaState extends State<HalamanUtama> {
   void _mulaiBannerOtomatis() {
     _timerBanner = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (daftarBanner.isEmpty) return;
-      setState(() => _bannerSekarang = (_bannerSekarang + 1) % daftarBanner.length);
+      setState(
+        () => _bannerSekarang = (_bannerSekarang + 1) % daftarBanner.length,
+      );
       _controllerBanner.animateToPage(
         _bannerSekarang,
         duration: const Duration(milliseconds: 500),
@@ -88,7 +90,9 @@ class _HalamanUtamaState extends State<HalamanUtama> {
           .map((d) => BannerModel.fromMap(d.data(), d.id))
           .toList();
 
-      final katDoc = await FirebaseFirestore.instance.collection('kategori').get();
+      final katDoc = await FirebaseFirestore.instance
+          .collection('kategori')
+          .get();
       daftarKategori = katDoc.docs
           .map((d) => CategoryModel.fromMap(d.data(), d.id))
           .toList();
@@ -144,27 +148,56 @@ class _HalamanUtamaState extends State<HalamanUtama> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.location_on, color: Colors.white, size: 16),
+                          const Icon(
+                            Icons.location_on,
+                            color: Colors.white,
+                            size: 16,
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               lokasiSaatIni,
-                              style: const TextStyle(color: Colors.white, fontSize: 13),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           TextButton(
                             onPressed: () {},
-                            child: const Text("Ubah", style: TextStyle(color: Colors.white, fontSize: 12)),
+                            child: const Text(
+                              "Ubah",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
                           ),
-                          _ikonLencana(Icons.chat, _jumlahChat, ()=>Navigator.pushNamed(context, '/chat')),
-                          _ikonLencana(Icons.notifications, _jumlahNotif, ()=>Navigator.pushNamed(context, '/notifikasi')),
-                          _ikonLencana(Icons.shopping_cart, _jumlahKeranjang, ()=>Navigator.pushNamed(context, '/keranjang')),
+                          _ikonLencana(
+                            Icons.chat,
+                            _jumlahChat,
+                            () => Navigator.pushNamed(context, '/chat'),
+                          ),
+                          _ikonLencana(
+                            Icons.notifications,
+                            _jumlahNotif,
+                            () => Navigator.pushNamed(context, '/notifikasi'),
+                          ),
+                          _ikonLencana(
+                            Icons.shopping_cart,
+                            _jumlahKeranjang,
+                            () => Navigator.pushNamed(context, '/keranjang'),
+                          ),
                           const SizedBox(width: 8),
                           const CircleAvatar(
                             radius: 14,
                             backgroundColor: Colors.white,
-                            child: Icon(Icons.person, size: 18, color: Colors.green),
+                            child: Icon(
+                              Icons.person,
+                              size: 18,
+                              color: Colors.green,
+                            ),
                           ),
                         ],
                       ),
@@ -173,20 +206,32 @@ class _HalamanUtamaState extends State<HalamanUtama> {
                         children: [
                           Expanded(
                             child: TextField(
-                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_)=>const HalamanCari())),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const HalamanCari(),
+                                ),
+                              ),
                               readOnly: true,
                               decoration: InputDecoration(
                                 hintText: "Cari hasil bumi...",
                                 prefixIcon: const Icon(Icons.search, size: 18),
                                 filled: true,
                                 fillColor: Colors.white,
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(50)),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(50),
+                                ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 8),
                           InkWell(
-                            onTap: ()=>Navigator.push(context, MaterialPageRoute(builder: (_)=>const HalamanScan())),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const HalamanScan(),
+                              ),
+                            ),
                             borderRadius: BorderRadius.circular(50),
                             child: Container(
                               padding: const EdgeInsets.all(10),
@@ -194,7 +239,11 @@ class _HalamanUtamaState extends State<HalamanUtama> {
                                 color: Colors.white,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.qr_code_scanner, color: Colors.green, size: 20),
+                              child: const Icon(
+                                Icons.qr_code_scanner,
+                                color: Colors.green,
+                                size: 20,
+                              ),
                             ),
                           ),
                         ],
@@ -241,16 +290,25 @@ class _HalamanUtamaState extends State<HalamanUtama> {
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Beranda"),
-          BottomNavigationBarItem(icon: Icon(Icons.category), label: "Kategori"),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: "Keranjang"),
-          BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: "Pesanan"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.category),
+            label: "Kategori",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: "Keranjang",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.receipt_long),
+            label: "Pesanan",
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Akun"),
         ],
         onTap: (index) {
-          if(index==1) Navigator.pushReplacementNamed(context, '/kategori');
-          if(index==2) Navigator.pushReplacementNamed(context, '/keranjang');
-          if(index==3) Navigator.pushReplacementNamed(context, '/pesanan');
-          if(index==4) Navigator.pushReplacementNamed(context, '/akun');
+          if (index == 1) Navigator.pushReplacementNamed(context, '/kategori');
+          if (index == 2) Navigator.pushReplacementNamed(context, '/keranjang');
+          if (index == 3) Navigator.pushReplacementNamed(context, '/pesanan');
+          if (index == 4) Navigator.pushReplacementNamed(context, '/akun');
         },
       ),
     );
@@ -268,10 +326,14 @@ class _HalamanUtamaState extends State<HalamanUtama> {
           children: [
             Icon(ikon, color: Colors.white, size: 20),
             Positioned(
-              right: 0, top: 0,
+              right: 0,
+              top: 0,
               child: Container(
                 padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
                 constraints: const BoxConstraints(minWidth: 10, minHeight: 10),
                 child: Text(
                   jumlah.toString(),
@@ -290,39 +352,55 @@ class _HalamanUtamaState extends State<HalamanUtama> {
     if (_isLoading) return _skeletonBanner();
     if (daftarBanner.isEmpty) return const SizedBox();
     return InkWell(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_)=>const HalamanPromo())),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const HalamanPromo()),
+      ),
       child: Container(
-        height: 150, margin: const EdgeInsets.all(12),
+        height: 150,
+        margin: const EdgeInsets.all(12),
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
         child: Stack(
           children: [
             PageView.builder(
               controller: _controllerBanner,
-              onPageChanged: (i)=>setState(()=>_bannerSekarang=i),
+              onPageChanged: (i) => setState(() => _bannerSekarang = i),
               itemCount: daftarBanner.length,
-              itemBuilder: (_,i) => ClipRRect(
+              itemBuilder: (_, i) => ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: CachedNetworkImage(
                   imageUrl: daftarBanner[i].gambarUrl,
                   fit: BoxFit.fill,
-                  placeholder: (_,__)=>const Center(child: CircularProgressIndicator()),
-                  errorWidget: (_,__,___)=>const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                  placeholder: (_, __) =>
+                      const Center(child: CircularProgressIndicator()),
+                  errorWidget: (_, __, ___) => const Icon(
+                    Icons.broken_image,
+                    size: 40,
+                    color: Colors.grey,
+                  ),
                 ),
               ),
             ),
             Positioned(
-              bottom: 12, left: 0, right: 0,
+              bottom: 12,
+              left: 0,
+              right: 0,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(daftarBanner.length, (i) => Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: _bannerSekarang==i?18:8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: _bannerSekarang==i?Colors.white:Colors.white54,
-                    borderRadius: BorderRadius.circular(4),
+                children: List.generate(
+                  daftarBanner.length,
+                  (i) => Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    width: _bannerSekarang == i ? 18 : 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: _bannerSekarang == i
+                          ? Colors.white
+                          : Colors.white54,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
-                )),
+                ),
               ),
             ),
           ],
@@ -341,10 +419,19 @@ class _HalamanUtamaState extends State<HalamanUtama> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Kategori", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text(
+                "Kategori",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
               InkWell(
-                onTap: ()=>Navigator.push(context, MaterialPageRoute(builder: (_)=>const HalamanKategori())),
-                child: const Text("Semua >", style: TextStyle(color: Colors.green, fontSize: 13)),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const HalamanKategori()),
+                ),
+                child: const Text(
+                  "Semua >",
+                  style: TextStyle(color: Colors.green, fontSize: 13),
+                ),
               ),
             ],
           ),
@@ -354,21 +441,39 @@ class _HalamanUtamaState extends State<HalamanUtama> {
           physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 12),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4, childAspectRatio: 0.8, crossAxisSpacing: 8, mainAxisSpacing: 8,
+            crossAxisCount: 4,
+            childAspectRatio: 0.8,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
           ),
           itemCount: daftarKategori.length,
-          itemBuilder: (_,i) => InkWell(
-            onTap: ()=>Navigator.push(context, MaterialPageRoute(builder: (_)=>HalamanKategori(kategoriId: daftarKategori[i].id))),
+          itemBuilder: (_, i) => InkWell(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    HalamanKategori(kategoriId: daftarKategori[i].id),
+              ),
+            ),
             borderRadius: BorderRadius.circular(8),
             child: Column(
               children: [
                 CircleAvatar(
                   radius: 22,
                   backgroundColor: Color(daftarKategori[i].warnaHex).shade100,
-                  child: Icon(daftarKategori[i].ikon, color: Color(daftarKategori[i].warnaHex), size: 20),
+                  child: Icon(
+                    daftarKategori[i].ikon,
+                    color: Color(daftarKategori[i].warnaHex),
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(height: 4),
-                Text(daftarKategori[i].nama, style: const TextStyle(fontSize: 11), textAlign: TextAlign.center, maxLines: 2),
+                Text(
+                  daftarKategori[i].nama,
+                  style: const TextStyle(fontSize: 11),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                ),
               ],
             ),
           ),
@@ -389,7 +494,14 @@ class _HalamanUtamaState extends State<HalamanUtama> {
             children: [
               Row(
                 children: const [
-                  Text("⚡ Flash Sale", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red)),
+                  Text(
+                    "⚡ Flash Sale",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
                   SizedBox(width: 10),
                   _HitungMundur(),
                 ],
@@ -404,7 +516,7 @@ class _HalamanUtamaState extends State<HalamanUtama> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             scrollDirection: Axis.horizontal,
             itemCount: daftarFlashSale.length,
-            itemBuilder: (_,i) => _KartuFlashSale(data: daftarFlashSale[i]),
+            itemBuilder: (_, i) => _KartuFlashSale(data: daftarFlashSale[i]),
           ),
         ),
       ],
@@ -415,8 +527,20 @@ class _HalamanUtamaState extends State<HalamanUtama> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: const [
-        Padding(padding: EdgeInsets.all(16), child: Text("🎁 Voucher Saya", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
-        Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Text("Ambil voucher menarik di halaman Voucher", style: TextStyle(color: Colors.grey, fontSize: 13))),
+        Padding(
+          padding: EdgeInsets.all(16),
+          child: Text(
+            "🎁 Voucher Saya",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            "Ambil voucher menarik di halaman Voucher",
+            style: TextStyle(color: Colors.grey, fontSize: 13),
+          ),
+        ),
         SizedBox(height: 16),
       ],
     );
@@ -424,20 +548,38 @@ class _HalamanUtamaState extends State<HalamanUtama> {
 
   Widget _bagianProduk() {
     if (_isLoading) return _skeletonProduk();
-    if (daftarProduk.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(30), child: Text("Belum ada produk tersedia", style: TextStyle(color: Colors.grey))));
+    if (daftarProduk.isEmpty)
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(30),
+          child: Text(
+            "Belum ada produk tersedia",
+            style: TextStyle(color: Colors.grey),
+          ),
+        ),
+      );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(padding: EdgeInsets.all(16), child: Text("🌾 Hasil Panen Terbaru", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+        const Padding(
+          padding: EdgeInsets.all(16),
+          child: Text(
+            "🌾 Hasil Panen Terbaru",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 12),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2, childAspectRatio: 0.65, crossAxisSpacing: 8, mainAxisSpacing: 8,
+            crossAxisCount: 2,
+            childAspectRatio: 0.65,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
           ),
           itemCount: daftarProduk.length,
-          itemBuilder: (_,i) => _KartuProduk(data: daftarProduk[i]),
+          itemBuilder: (_, i) => _KartuProduk(data: daftarProduk[i]),
         ),
       ],
     );
@@ -450,7 +592,14 @@ class _HalamanUtamaState extends State<HalamanUtama> {
       color: Colors.green.shade50,
       child: Column(
         children: [
-          const Text("🌾 Petani Desa Berkah", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
+          const Text(
+            "🌾 Petani Desa Berkah",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.green,
+            ),
+          ),
           const SizedBox(height: 8),
           const Text(
             "Membantu saudara petani, melayani saudara pembeli\nTanpa tengkulak, harga adil, saling berkah",
@@ -461,14 +610,20 @@ class _HalamanUtamaState extends State<HalamanUtama> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: const [
-              Icon(Icons.facebook, color: Colors.green), SizedBox(width: 15),
-              Icon(Icons.camera_alt, color: Colors.green), SizedBox(width: 15),
-              Icon(Icons.telegram, color: Colors.green), SizedBox(width: 15),
+              Icon(Icons.facebook, color: Colors.green),
+              SizedBox(width: 15),
+              Icon(Icons.camera_alt, color: Colors.green),
+              SizedBox(width: 15),
+              Icon(Icons.telegram, color: Colors.green),
+              SizedBox(width: 15),
               Icon(Icons.call, color: Colors.green),
             ],
           ),
           const SizedBox(height: 15),
-          const Text("© 2026 Petani Desa Berkah | Versi 1.0.0 Beta | Aman & Terpercaya", style: TextStyle(fontSize: 11, color: Colors.grey)),
+          const Text(
+            "© 2026 Petani Desa Berkah | Versi 1.0.0 Beta | Aman & Terpercaya",
+            style: TextStyle(fontSize: 11, color: Colors.grey),
+          ),
         ],
       ),
     );
@@ -477,10 +632,56 @@ class _HalamanUtamaState extends State<HalamanUtama> {
   // ==============================================
   // SKELETON LOADING
   // ==============================================
-  Widget _skeletonBanner() => Container(height: 150, margin: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)));
-  Widget _skeletonKategori() => GridView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), padding: const EdgeInsets.symmetric(horizontal: 12), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4), itemCount: 8, itemBuilder: (_,__)=>CircleAvatar(radius: 22, backgroundColor: Colors.grey.shade200));
-  Widget _skeletonFlashSale() => SizedBox(height: 180, child: ListView.builder(padding: const EdgeInsets.symmetric(horizontal: 12), scrollDirection: Axis.horizontal, itemCount: 4, itemBuilder: (_,__)=>Container(width: 130, margin: const EdgeInsets.symmetric(horizontal: 4), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)))));
-  Widget _skeletonProduk() => GridView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), padding: const EdgeInsets.symmetric(horizontal: 12), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2), itemCount: 6, itemBuilder: (_,__)=>Container(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8))));
+  Widget _skeletonBanner() => Container(
+    height: 150,
+    margin: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+    ),
+  );
+  Widget _skeletonKategori() => GridView.builder(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    padding: const EdgeInsets.symmetric(horizontal: 12),
+    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 4,
+    ),
+    itemCount: 8,
+    itemBuilder: (_, __) =>
+        CircleAvatar(radius: 22, backgroundColor: Colors.grey.shade200),
+  );
+  Widget _skeletonFlashSale() => SizedBox(
+    height: 180,
+    child: ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      scrollDirection: Axis.horizontal,
+      itemCount: 4,
+      itemBuilder: (_, __) => Container(
+        width: 130,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    ),
+  );
+  Widget _skeletonProduk() => GridView.builder(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    padding: const EdgeInsets.symmetric(horizontal: 12),
+    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 2,
+    ),
+    itemCount: 6,
+    itemBuilder: (_, __) => Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+      ),
+    ),
+  );
 }
 
 // ==============================================
@@ -491,14 +692,36 @@ class _HitungMundur extends StatefulWidget {
   @override
   State<_HitungMundur> createState() => _HitungMundurState();
 }
+
 class _HitungMundurState extends State<_HitungMundur> {
   Duration sisa = const Duration(hours: 2, minutes: 15, seconds: 30);
   Timer? timer;
-  @override void initState() { super.initState(); timer = Timer.periodic(const Duration(seconds: 1), (_)=>setState(()=>sisa.inSeconds>0 ? sisa -= const Duration(seconds: 1) : null)); }
-  @override void dispose() { timer?.cancel(); super.dispose(); }
-  @override Widget build(BuildContext context) => Text(
-    "${sisa.inHours.toString().padLeft(2,'0')}:${(sisa.inMinutes%60).toString().padLeft(2,'0')}:${(sisa.inSeconds%60).toString().padLeft(2,'0')}",
-    style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 13, backgroundColor: Colors.white),
+  @override
+  void initState() {
+    super.initState();
+    timer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => setState(
+        () => sisa.inSeconds > 0 ? sisa -= const Duration(seconds: 1) : null,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Text(
+    "${sisa.inHours.toString().padLeft(2, '0')}:${(sisa.inMinutes % 60).toString().padLeft(2, '0')}:${(sisa.inSeconds % 60).toString().padLeft(2, '0')}",
+    style: const TextStyle(
+      color: Colors.red,
+      fontWeight: FontWeight.bold,
+      fontSize: 13,
+      backgroundColor: Colors.white,
+    ),
   );
 }
 
@@ -508,23 +731,37 @@ class _HitungMundurState extends State<_HitungMundur> {
 class _KartuFlashSale extends StatelessWidget {
   final ProductModel data;
   const _KartuFlashSale({required this.data});
-  @override Widget build(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
     return InkWell(
-      onTap: ()=>Navigator.push(context, MaterialPageRoute(builder: (_)=>HalamanDetailProduk(produkId: data.id))),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => HalamanDetailProduk(produkId: data.id),
+        ),
+      ),
       child: Container(
-        width: 130, margin: const EdgeInsets.symmetric(horizontal: 4),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 2)]),
+        width: 130,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 2)],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(8),
+                ),
                 child: CachedNetworkImage(
                   imageUrl: data.gambarUrl,
                   fit: BoxFit.cover,
                   width: double.infinity,
-                  errorWidget: (_,__,___)=>const Icon(Icons.image, size: 40, color: Colors.grey),
+                  errorWidget: (_, __, ___) =>
+                      const Icon(Icons.image, size: 40, color: Colors.grey),
                 ),
               ),
             ),
@@ -533,14 +770,40 @@ class _KartuFlashSale extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(data.nama, style: const TextStyle(fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(
+                    data.nama,
+                    style: const TextStyle(fontSize: 12),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   const SizedBox(height: 2),
-                  Text("Rp ${data.hargaPromo}", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.red)),
-                  Text("Rp ${data.hargaLama}", style: const TextStyle(fontSize: 11, decoration: TextDecoration.lineThrough, color: Colors.grey)),
+                  Text(
+                    "Rp ${data.hargaPromo}",
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
+                  Text(
+                    "Rp ${data.hargaLama}",
+                    style: const TextStyle(
+                      fontSize: 11,
+                      decoration: TextDecoration.lineThrough,
+                      color: Colors.grey,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  LinearProgressIndicator(value: data.stok>50 ? 0.2 : data.stok/50, backgroundColor: Colors.grey.shade200, color: Colors.red),
+                  LinearProgressIndicator(
+                    value: data.stok > 50 ? 0.2 : data.stok / 50,
+                    backgroundColor: Colors.grey.shade200,
+                    color: Colors.red,
+                  ),
                   const SizedBox(height: 2),
-                  Text("Sisa ${data.stok} ${data.satuan}", style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                  Text(
+                    "Sisa ${data.stok} ${data.satuan}",
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
                 ],
               ),
             ),
@@ -557,15 +820,27 @@ class _KartuFlashSale extends StatelessWidget {
 class _KartuProduk extends StatefulWidget {
   final ProductModel data;
   const _KartuProduk({required this.data});
-  @override State<_KartuProduk> createState() => _KartuProdukState();
+  @override
+  State<_KartuProduk> createState() => _KartuProdukState();
 }
+
 class _KartuProdukState extends State<_KartuProduk> {
   bool disukai = false;
-  @override Widget build(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
     return InkWell(
-      onTap: ()=>Navigator.push(context, MaterialPageRoute(builder: (_)=>HalamanDetailProduk(produkId: widget.data.id))),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => HalamanDetailProduk(produkId: widget.data.id),
+        ),
+      ),
       child: Container(
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 2)]),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 2)],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -573,23 +848,114 @@ class _KartuProdukState extends State<_KartuProduk> {
               child: Stack(
                 children: [
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(8),
+                    ),
                     child: CachedNetworkImage(
                       imageUrl: widget.data.gambarUrl,
                       fit: BoxFit.cover,
                       width: double.infinity,
-                      errorWidget: (_,__,___)=>const Icon(Icons.image, size: 50, color: Colors.grey),
+                      errorWidget: (_, __, ___) =>
+                          const Icon(Icons.image, size: 50, color: Colors.grey),
                     ),
                   ),
-                  if(widget.data.diskon>0) Positioned(top: 6, left: 6, child: Container(padding: const EdgeInsets.all(3), decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(4)), child: Text("-${widget.data.diskon}%", style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)))),
-                  if(widget.data.isBaru) Positioned(top: 6, left: 40, child: Container(padding: const EdgeInsets.all(3), decoration: BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(4)), child: const Text("BARU", style: TextStyle(color: Colors.white, fontSize: 9)))),
-                  if(widget.data.isTerlaris) Positioned(top: 28, left: 6, child: Container(padding: const EdgeInsets.all(3), decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(4)), child: const Text("LARIS", style: TextStyle(color: Colors.white, fontSize: 9)))),
-                  if(widget.data.isOrganik) Positioned(top: 6, right: 30, child: Container(padding: const EdgeInsets.all(3), decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(4)), child: const Text("ORGANIK", style: TextStyle(color: Colors.white, fontSize: 9)))),
-                  Positioned(top: 6, right: 6, child: Row(children: [
-                    InkWell(onTap: ()=>Share.share("Lihat produk ini: ${widget.data.nama} - Rp ${widget.data.hargaPromo}"), child: const Icon(Icons.share, color: Colors.white, size: 18, shadows: [Shadow(color: Colors.black45)])),
-                    const SizedBox(width: 6),
-                    InkWell(onTap: ()=>setState(()=>disukai=!disukai), child: Icon(disukai?Icons.favorite:Icons.favorite_border, color: disukai?Colors.red:Colors.white, size: 18, shadows: const [Shadow(color: Colors.black45)])),
-                  ])),
+                  if (widget.data.diskon > 0)
+                    Positioned(
+                      top: 6,
+                      left: 6,
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          "-${widget.data.diskon}%",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (widget.data.isBaru)
+                    Positioned(
+                      top: 6,
+                      left: 40,
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          "BARU",
+                          style: TextStyle(color: Colors.white, fontSize: 9),
+                        ),
+                      ),
+                    ),
+                  if (widget.data.isTerlaris)
+                    Positioned(
+                      top: 28,
+                      left: 6,
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          "LARIS",
+                          style: TextStyle(color: Colors.white, fontSize: 9),
+                        ),
+                      ),
+                    ),
+                  if (widget.data.isOrganik)
+                    Positioned(
+                      top: 6,
+                      right: 30,
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          "ORGANIK",
+                          style: TextStyle(color: Colors.white, fontSize: 9),
+                        ),
+                      ),
+                    ),
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Row(
+                      children: [
+                        InkWell(
+                          onTap: () => Share.share(
+                            "Lihat produk ini: ${widget.data.nama} - Rp ${widget.data.hargaPromo}",
+                          ),
+                          child: const Icon(
+                            Icons.share,
+                            color: Colors.white,
+                            size: 18,
+                            shadows: [Shadow(color: Colors.black45)],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        InkWell(
+                          onTap: () => setState(() => disukai = !disukai),
+                          child: Icon(
+                            disukai ? Icons.favorite : Icons.favorite_border,
+                            color: disukai ? Colors.red : Colors.white,
+                            size: 18,
+                            shadows: const [Shadow(color: Colors.black45)],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -598,20 +964,75 @@ class _KartuProdukState extends State<_KartuProduk> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.data.nama, style: const TextStyle(fontSize: 13), maxLines: 1),
+                  Text(
+                    widget.data.nama,
+                    style: const TextStyle(fontSize: 13),
+                    maxLines: 1,
+                  ),
                   const SizedBox(height: 2),
-                  Text("${widget.data.supplierNama} • ${widget.data.supplierKabupaten}", style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                  Text(
+                    "${widget.data.supplierNama} • ${widget.data.supplierKabupaten}",
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
                   const SizedBox(height: 4),
-                  Text("Rp ${widget.data.hargaPromo}", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green)),
-                  Text("Rp ${widget.data.hargaLama}", style: const TextStyle(fontSize: 11, decoration: TextDecoration.lineThrough, color: Colors.grey)),
+                  Text(
+                    "Rp ${widget.data.hargaPromo}",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                  Text(
+                    "Rp ${widget.data.hargaLama}",
+                    style: const TextStyle(
+                      fontSize: 11,
+                      decoration: TextDecoration.lineThrough,
+                      color: Colors.grey,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Row(children: [const Icon(Icons.star, color: Colors.orange, size: 12), Text(" ${widget.data.rating} | ${widget.data.terjual} terjual", style: TextStyle(fontSize: 10, color: Colors.grey))]),
+                  Row(
+                    children: [
+                      const Icon(Icons.star, color: Colors.orange, size: 12),
+                      Text(
+                        " ${widget.data.rating} | ${widget.data.terjual} terjual",
+                        style: TextStyle(fontSize: 10, color: Colors.grey),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 6),
-                  Row(children: [
-                    Expanded(child: SizedBox(height: 28, child: ElevatedButton(onPressed: (){}, style: ElevatedButton.styleFrom(padding: EdgeInsets.zero, textStyle: const TextStyle(fontSize: 11)), child: const Text("Beli Sekarang")))),
-                    const SizedBox(width: 4),
-                    Expanded(child: SizedBox(height: 28, child: OutlinedButton(onPressed: (){}, style: OutlinedButton.styleFrom(padding: EdgeInsets.zero, textStyle: const TextStyle(fontSize: 11)), child: const Text("+ Keranjang")))),
-                  ]),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 28,
+                          child: ElevatedButton(
+                            onPressed: () {},
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              textStyle: const TextStyle(fontSize: 11),
+                            ),
+                            child: const Text("Beli Sekarang"),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: SizedBox(
+                          height: 28,
+                          child: OutlinedButton(
+                            onPressed: () {},
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              textStyle: const TextStyle(fontSize: 11),
+                            ),
+                            child: const Text("+ Keranjang"),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -621,4 +1042,3 @@ class _KartuProdukState extends State<_KartuProduk> {
     );
   }
 }
-

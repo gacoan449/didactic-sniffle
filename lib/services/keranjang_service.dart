@@ -10,14 +10,16 @@ class KeranjangService {
   String? get uid => _auth.currentUser?.uid;
 
   CollectionReference _col() {
-    if(uid == null) throw 'Pengguna belum masuk';
+    if (uid == null) throw 'Pengguna belum masuk';
     return _db.collection('pengguna').doc(uid).collection('keranjang');
   }
 
   Future<List<KeranjangItem>> ambilSemua() async {
-    if(uid == null) return [];
+    if (uid == null) return [];
     final snap = await _col().get();
-    return snap.docs.map((doc) => KeranjangItem.dariMap(doc.data() as Map<String,dynamic>)).toList();
+    return snap.docs
+        .map((doc) => KeranjangItem.dariMap(doc.data() as Map<String, dynamic>))
+        .toList();
   }
 
   Future<void> simpan(KeranjangItem barang) async {
@@ -29,8 +31,10 @@ class KeranjangService {
   }
 
   Future<void> kosongkan() async {
-    if(uid == null) return;
+    if (uid == null) return;
     final snap = await _col().get();
-    for(final doc in snap.docs) { doc.reference.delete(); }
+    for (final doc in snap.docs) {
+      doc.reference.delete();
+    }
   }
 }

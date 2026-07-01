@@ -20,8 +20,16 @@ class AppTheme {
       background: warnaLatar,
     ),
     textTheme: const TextTheme(
-      titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: warnaTeks),
-      titleMedium: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: warnaTeks),
+      titleLarge: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: warnaTeks,
+      ),
+      titleMedium: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: warnaTeks,
+      ),
       bodyLarge: TextStyle(fontSize: 16, height: 1.5, color: warnaTeks),
       bodyMedium: TextStyle(fontSize: 14, height: 1.5, color: warnaTeks),
       labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),

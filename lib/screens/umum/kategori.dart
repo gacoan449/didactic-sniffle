@@ -29,28 +29,45 @@ class HalamanKategori extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 15),
               scrollDirection: Axis.horizontal,
               itemCount: daftarKategori.length,
-              separatorBuilder: (_,__) => const SizedBox(width: 12),
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
               itemBuilder: (c, i) {
                 final kt = daftarKategori[i];
                 final terpilih = kategoriTerpilih == kt.id;
                 return InkWell(
-                  onTap: () => ref.read(kategoriTerpilihProvider.notifier).state = kt.id,
+                  onTap: () =>
+                      ref.read(kategoriTerpilihProvider.notifier).state = kt.id,
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     width: 100,
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: terpilih ? kt.warna : Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(12),
-                      border: terpilih ? null : Border.all(color: Colors.grey.shade300),
+                      border: terpilih
+                          ? null
+                          : Border.all(color: Colors.grey.shade300),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(kt.ikon, color: terpilih ? Colors.white : kt.warna, size: 26),
+                        Icon(
+                          kt.ikon,
+                          color: terpilih ? Colors.white : kt.warna,
+                          size: 26,
+                        ),
                         const SizedBox(height: 6),
-                        Text(kt.nama, maxLines: 1, overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 11, color: terpilih ? Colors.white : Colors.black87, fontWeight: FontWeight.w500),
+                        Text(
+                          kt.nama,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: terpilih ? Colors.white : Colors.black87,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ],
                     ),
@@ -69,17 +86,24 @@ class HalamanKategori extends ConsumerWidget {
               error: (e, s) => Center(child: Text('Error: $e')),
               data: (semuaProduk) {
                 final daftarTerfilter = kategoriTerpilih == 'semua'
-                  ? semuaProduk
-                  : semuaProduk.where((p) => p.kategori == kategoriTerpilih).toList();
+                    ? semuaProduk
+                    : semuaProduk
+                          .where((p) => p.kategori == kategoriTerpilih)
+                          .toList();
 
                 if (daftarTerfilter.isEmpty) {
-                  return const Center(child: Text('Belum ada produk di kategori ini'));
+                  return const Center(
+                    child: Text('Belum ada produk di kategori ini'),
+                  );
                 }
 
                 return GridView.builder(
                   padding: const EdgeInsets.all(12),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, childAspectRatio: 0.75, crossAxisSpacing: 10, mainAxisSpacing: 10,
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.75,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
                   ),
                   itemCount: daftarTerfilter.length,
                   itemBuilder: (c, i) => KartuProduk(data: daftarTerfilter[i]),

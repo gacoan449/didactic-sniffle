@@ -38,7 +38,7 @@ class AlamatModel {
     'utama': utama,
   };
 
-  factory AlamatModel.dariMap(Map<String,dynamic> map, String docId) {
+  factory AlamatModel.dariMap(Map<String, dynamic> map, String docId) {
     return AlamatModel(
       id: docId,
       namaPenerima: map['namaPenerima']?.toString() ?? '',
@@ -56,6 +56,6 @@ class AlamatModel {
 
   String alamatLengkap() {
     return '$detail, $desa, $kecamatan, $kabupaten, $provinsi ${kodePos.isNotEmpty ? kodePos : ''}'
-      '${catatan.isNotEmpty ? '\nCatatan: $catatan' : ''}';
+        '${catatan.isNotEmpty ? '\nCatatan: $catatan' : ''}';
   }
 }

@@ -34,7 +34,7 @@ class PesananModel {
   });
 
   Map<String, dynamic> keMap() => {
-    if(id != null) 'id': id,
+    if (id != null) 'id': id,
     'noPesanan': noPesanan,
     'pembeliUid': pembeliUid,
     'namaPembeli': namaPembeli,

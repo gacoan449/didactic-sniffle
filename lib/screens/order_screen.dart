@@ -2,82 +2,55 @@ import 'package:flutter/material.dart';
 
 import '../services/order_service.dart';
 
-class OrderScreen extends StatelessWidget{
+class OrderScreen extends StatelessWidget {
+  const OrderScreen({super.key});
 
-const OrderScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Pesanan Saya")),
 
-@override
+      body: ListView.builder(
+        itemCount: OrderService.orders.length,
 
-Widget build(BuildContext context){
+        itemBuilder: (context, index) {
+          var order = OrderService.orders[index];
 
-return Scaffold(
+          return Card(
+            margin: const EdgeInsets.all(10),
 
-appBar:AppBar(
+            child: ListTile(
+              leading: const Icon(Icons.inventory),
 
-title:const Text("Pesanan Saya"),
+              title: Text(order.id),
 
-),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
 
-body:ListView.builder(
+                children: [
+                  Text(order.status),
 
-itemCount:OrderService.orders.length,
+                  Text(order.kurir),
 
-itemBuilder:(context,index){
+                  Text(order.pembayaran),
 
-var order=OrderService.orders[index];
+                  Text(order.tanggal),
+                ],
+              ),
 
-return Card(
+              trailing: Text(
+                "Rp ${order.total}",
 
-margin:const EdgeInsets.all(10),
+                style: const TextStyle(
+                  color: Colors.red,
 
-child:ListTile(
-
-leading:const Icon(Icons.inventory),
-
-title:Text(order.id),
-
-subtitle:Column(
-
-crossAxisAlignment:CrossAxisAlignment.start,
-
-children:[
-
-Text(order.status),
-
-Text(order.kurir),
-
-Text(order.pembayaran),
-
-Text(order.tanggal),
-
-],
-
-),
-
-trailing:Text(
-
-"Rp ${order.total}",
-
-style:const TextStyle(
-
-color:Colors.red,
-
-fontWeight:FontWeight.bold,
-
-),
-
-),
-
-),
-
-);
-
-},
-
-),
-
-);
-
-}
-
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }

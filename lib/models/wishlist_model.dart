@@ -25,14 +25,15 @@ class WishlistModel {
     'ditambahkanPada': Timestamp.fromDate(ditambahkanPada),
   };
 
-  factory WishlistModel.dariMap(Map<String,dynamic> map, String docId) {
+  factory WishlistModel.dariMap(Map<String, dynamic> map, String docId) {
     return WishlistModel(
       id: docId,
       produkId: map['produkId']?.toString() ?? '',
       namaProduk: map['namaProduk']?.toString() ?? '',
       gambar: map['gambar']?.toString() ?? '',
       harga: (map['harga'] as num?)?.toDouble() ?? 0,
-      ditambahkanPada: (map['ditambahkanPada'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      ditambahkanPada:
+          (map['ditambahkanPada'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 }

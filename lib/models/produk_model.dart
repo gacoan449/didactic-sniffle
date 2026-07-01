@@ -32,11 +32,14 @@ class ProdukModel {
     'gambarUrl': gambarUrl,
   };
 
-  factory ProdukModel.dariMap(Map<String,dynamic> map, String docId) {
+  factory ProdukModel.dariMap(Map<String, dynamic> map, String docId) {
     return ProdukModel(
       id: docId,
       nama: map['nama']?.toString() ?? '',
-      namaLower: map['namaLower']?.toString() ?? map['nama']?.toString().toLowerCase() ?? '',
+      namaLower:
+          map['namaLower']?.toString() ??
+          map['nama']?.toString().toLowerCase() ??
+          '',
       kategori: map['kategori']?.toString() ?? '',
       harga: double.tryParse(map['harga']?.toString() ?? '0') ?? 0,
       stok: int.tryParse(map['stok']?.toString() ?? '0') ?? 0,

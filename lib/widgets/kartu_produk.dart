@@ -16,7 +16,11 @@ class KartuProduk extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final daftarFavorit = ref.watch(daftarWishlistProvider).value ?? [];
     final disukai = daftarFavorit.any((e) => e.produkId == produk.id);
-    final formatHarga = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final formatHarga = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -30,23 +34,33 @@ class KartuProduk extends ConsumerWidget {
                 fit: StackFit.expand,
                 children: [
                   CachedNetworkImage(
-                    imageUrl: produk.gambarUrl, fit: BoxFit.cover,
-                    placeholder: (c,u) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                    errorWidget: (c,u,e) => const Icon(Icons.image, size: 50, color: Colors.grey),
+                    imageUrl: produk.gambarUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (c, u) => const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    errorWidget: (c, u, e) =>
+                        const Icon(Icons.image, size: 50, color: Colors.grey),
                   ),
                   Positioned(
-                    top: 6, right: 6,
+                    top: 6,
+                    right: 6,
                     child: InkWell(
                       onTap: () async {
                         final data = WishlistModel(
-                          id: '', produkId: produk.id, namaProduk: produk.nama,
-                          gambar: produk.gambarUrl, harga: produk.harga, ditambahkanPada: DateTime.now()
+                          id: '',
+                          produkId: produk.id,
+                          namaProduk: produk.nama,
+                          gambar: produk.gambarUrl,
+                          harga: produk.harga,
+                          ditambahkanPada: DateTime.now(),
                         );
                         await WishlistService().ubahStatus(data);
                         ref.invalidate(daftarWishlistProvider);
                       },
                       child: CircleAvatar(
-                        radius: 18, backgroundColor: Colors.white70,
+                        radius: 18,
+                        backgroundColor: Colors.white70,
                         child: AnimatedSwitcher(
                           duration: const Duration(milliseconds: 250),
                           child: Icon(
@@ -67,9 +81,24 @@ class KartuProduk extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(produk.nama, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                  Text(
+                    produk.nama,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   const SizedBox(height: 6),
-                  Text(formatHarga.format(produk.harga), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.warnaUtama)),
+                  Text(
+                    formatHarga.format(produk.harga),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.warnaUtama,
+                    ),
+                  ),
                 ],
               ),
             ),

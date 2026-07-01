@@ -1,3 +1,5 @@
+import "../models/produk_model.dart";
+import "../screens/umum/detail_produk.dart";
 import 'package:go_router/go_router.dart';
 import '../screens/splash.dart';
 import '../screens/auth/masuk.dart';
@@ -35,8 +37,15 @@ final AppRoutes = GoRouter(
     GoRoute(path: '/ubah-sandi', builder: (_, __) => const HalamanUbahSandi()),
     GoRoute(path: '/beranda', builder: (c, s) => const PengendaliMenu()),
     GoRoute(path: '/profil', builder: (c, s) => const HalamanProfil()),
-    GoRoute(path: '/ubah-profil', builder: (c, s) => HalamanUbahProfil(pengguna: s.extra as PenggunaModel?)),
+    GoRoute(
+      path: '/ubah-profil',
+      builder: (c, s) => HalamanUbahProfil(pengguna: s.extra as PenggunaModel?),
+    ),
     GoRoute(path: '/produk', builder: (c, s) => const HalamanDaftarProduk()),
+    GoRoute(
+      path: '/detail-produk',
+      builder: (c, s) => HalamanDetailProduk(produk: s.extra as ProdukModel),
+    ),
     GoRoute(path: '/favorit', builder: (c, s) => const HalamanWishlist()),
     GoRoute(path: '/cari', builder: (c, s) => const HalamanPencarian()),
     GoRoute(path: '/keranjang', builder: (c, s) => const HalamanKeranjang()),
@@ -44,9 +53,22 @@ final AppRoutes = GoRouter(
     GoRoute(path: '/riwayat', builder: (c, s) => const HalamanRiwayatPesanan()),
     GoRoute(path: '/voucher', builder: (_, __) => const HalamanVoucherSaya()),
     GoRoute(path: '/notifikasi', builder: (_, __) => const HalamanNotifikasi()),
-    GoRoute(path: '/aktivitas', builder: (_, __) => const HalamanRiwayatAktivitas()),
-    GoRoute(path: '/daftar-alamat', builder: (c, s) => HalamanDaftarAlamat(pilihUntukCheckout: s.extra as bool? ?? false)),
-    GoRoute(path: '/tambah-alamat', builder: (c, s) => HalamanTambahAlamat(alamat: s.extra as AlamatModel?)),
-    GoRoute(path: '/detail-pesanan', builder: (c, s) => HalamanDetailPesanan(pesanan: s.extra as PesananModel)),
+    GoRoute(
+      path: '/aktivitas',
+      builder: (_, __) => const HalamanRiwayatAktivitas(),
+    ),
+    GoRoute(
+      path: '/daftar-alamat',
+      builder: (c, s) =>
+          HalamanDaftarAlamat(pilihUntukCheckout: s.extra as bool? ?? false),
+    ),
+    GoRoute(
+      path: '/tambah-alamat',
+      builder: (c, s) => HalamanTambahAlamat(alamat: s.extra as AlamatModel?),
+    ),
+    GoRoute(
+      path: '/detail-pesanan',
+      builder: (c, s) => HalamanDetailPesanan(pesanan: s.extra as PesananModel),
+    ),
   ],
 );

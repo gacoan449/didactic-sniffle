@@ -1,9 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_model.dart';
 
-final authStateProvider = StateNotifierProvider<AuthStateNotifier, AsyncValue<UserModel?>>((ref) {
-  return AuthStateNotifier();
-});
+final authStateProvider =
+    StateNotifierProvider<AuthStateNotifier, AsyncValue<UserModel?>>((ref) {
+      return AuthStateNotifier();
+    });
 
 class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
   AuthStateNotifier() : super(const AsyncValue.data(null));
