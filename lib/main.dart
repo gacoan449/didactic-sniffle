@@ -1,3 +1,4 @@
+import "package:timeago/timeago.dart" as timeago;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

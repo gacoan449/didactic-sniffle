@@ -141,6 +141,7 @@ class HalamanProfil extends ConsumerWidget {
                       await PenggunaService().keluar();
                       ref.invalidateAll();
                       ref.read(keranjangProvider.notifier).kosongkan();
+        if(!context.mounted) return;
                       if(context.mounted) context.go('/masuk');
                     }
                   },

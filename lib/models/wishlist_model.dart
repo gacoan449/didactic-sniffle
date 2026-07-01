@@ -22,7 +22,7 @@ class WishlistModel {
     'namaProduk': namaProduk,
     'gambar': gambar,
     'harga': harga,
-    'ditambahkanPada': ditambahkanPada,
+    'ditambahkanPada': Timestamp.fromDate(ditambahkanPada),
   };
 
   factory WishlistModel.dariMap(Map<String,dynamic> map, String docId) {
