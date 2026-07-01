@@ -9,9 +9,9 @@ class PesananService {
   final FirebaseFirestore _db = LayananFirebase.db;
   final FirebaseAuth _auth = LayananFirebase.auth;
 
-  String buatNoPesanan() {
+  String buatNoPesanan(String docId) {
     final tanggal = DateFormat('yyyyMMdd').format(DateTime.now());
-    return 'PDB-$tanggal-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}';
+    return 'PDB-$tanggal-${docId.substring(0,6).toUpperCase()}';
   }
 
   Future<void> buatPesanan(PesananModel pesanan, List<ProdukModel> daftarProduk) async {
@@ -31,15 +31,23 @@ class PesananService {
         trans.update(docProduk.reference, {'stok': data.stok - barang.jumlah});
       }
 
-      // 3. Simpan Pesanan Utama
+      // 3. Simpan Pesanan Utama di collection 'pesanan'
       final docPesanan = _db.collection('pesanan').doc();
-      trans.set(docPesanan, pesanan.keMap());
-
-      // 4. Simpan Salinan ke Riwayat Pengguna
-      trans.set(
-        _db.collection('pengguna').doc(uid).collection('pesanan').doc(docPesanan.id),
-        pesanan.keMap()
-      );
+      final noPesanan = buatNoPesanan(docPesanan.id);
+      
+      trans.set(docPesanan, {
+        ...pesanan.keMap(),
+        'noPesanan': noPesanan,
+      });
     });
+  }
+
+  Stream<List<PesananModel>> ambilPesananPengguna(String uid) {
+    return _db
+      .collection('pesanan')
+      .where('pembeliUid', isEqualTo: uid)
+      .orderBy('dibuatPada', descending: true)
+      .snapshots()
+      .map((snap) => snap.docs.map((doc) => PesananModel.dariMap(doc.data() as Map<String,dynamic>, doc.id)).toList());
   }
 }

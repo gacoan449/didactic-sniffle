@@ -43,7 +43,6 @@ class _HalamanCheckoutState extends ConsumerState<HalamanCheckout> {
             data: (daftarProduk) => ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                // Bagian Alamat
                 const Text('Alamat Pengiriman', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 10),
                 Card(
@@ -63,7 +62,6 @@ class _HalamanCheckoutState extends ConsumerState<HalamanCheckout> {
                 ),
                 const SizedBox(height: 20),
 
-                // Ringkasan Belanja
                 const Text('Ringkasan Belanja', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 10),
                 Card(
@@ -99,7 +97,6 @@ class _HalamanCheckoutState extends ConsumerState<HalamanCheckout> {
                 ),
                 const SizedBox(height: 20),
 
-                // Metode Pembayaran
                 const Text('Metode Pembayaran', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 10),
                 Card(
@@ -160,7 +157,6 @@ class _HalamanCheckoutState extends ConsumerState<HalamanCheckout> {
   Future<void> prosesPesanan() async {
     if(!mounted) return;
 
-    // Validasi Wajib
     if(alamatPilih == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Silakan pilih alamat pengiriman terlebih dahulu'), backgroundColor: Colors.orange));
       return;
@@ -180,10 +176,9 @@ class _HalamanCheckoutState extends ConsumerState<HalamanCheckout> {
       if(user == null) throw 'Pengguna belum masuk';
 
       final daftarProduk = await ref.read(daftarProdukProvider.future);
-      final noPesanan = PesananService().buatNoPesanan();
 
       final pesanan = PesananModel(
-        noPesanan: noPesanan,
+        noPesanan: '', // Akan diisi otomatis di service
         pembeliUid: user.uid,
         namaPembeli: user.displayName ?? 'Pengguna',
         barang: daftarKeranjang,
@@ -200,7 +195,7 @@ class _HalamanCheckoutState extends ConsumerState<HalamanCheckout> {
 
       if(!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Pesanan berhasil dibuat!\nNo: $noPesanan'), backgroundColor: Colors.green)
+        const SnackBar(content: Text('Pesanan berhasil dibuat!'), backgroundColor: Colors.green)
       );
       context.go('/beranda');
     } catch (e) {
