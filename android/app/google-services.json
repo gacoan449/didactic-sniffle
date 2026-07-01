@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "357226688359",
+    "project_id": "petani-desa-berkah",
+    "storage_bucket": "petani-desa-berkah.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:357226688359:android:18c6e9f28c21f1821009c2",
+        "android_client_info": {
+          "package_name": "com.petanidesaberkah.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLSe-6Kl7hk1F-JHM_chRcm-sFSr4qKmg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
