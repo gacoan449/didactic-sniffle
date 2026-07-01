@@ -1,157 +1,155 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/theme.dart';
-import '../../models/auth_model.dart';
-import '../../services/profil_service.dart';
-import '../../services/auth_service.dart';
+import '../../providers/pengguna_provider.dart';
+import '../../providers/keranjang_provider.dart';
+import '../../services/pengguna_service.dart';
+import '../pengguna/daftar_alamat.dart';
+import '../pengguna/ubah_profil.dart';
 
-class HalamanProfil extends StatefulWidget {
+class HalamanProfil extends ConsumerWidget {
   const HalamanProfil({super.key});
 
   @override
-  State<HalamanProfil> createState() => _HalamanProfilState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final data = ref.watch(dataPenggunaProvider);
 
-class _HalamanProfilState extends State<HalamanProfil> {
-  final _f = GlobalKey<FormBuilderState>();
-  bool muat = false;
-  bool muatData = true;
-  AuthModel? dataProfil;
-  final _layProfil = ProfilService();
-  final _layAuth = AuthService();
-
-  @override
-  void initState() {
-    super.initState();
-    ambilData();
-  }
-
-  Future<void> ambilData() async {
-    try {
-      dataProfil = await _layProfil.ambilDataProfil();
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal memuat data: $e'), backgroundColor: Colors.red)
-      );
-    } finally {
-      if (mounted) setState(() => muatData = false);
-    }
-  }
-
-  Future<void> simpanPerubahan() async {
-    if (!_f.currentState!.saveAndValidate()) return;
-    setState(() => muat = true);
-
-    try {
-      final d = _f.currentState!.value;
-      await _layProfil.perbaruiProfil({
-        'nama': d['nama'],
-        'noHp': d['noHp'],
-      });
-
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profil berhasil diperbarui!'), backgroundColor: Colors.green)
-      );
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal simpan: $e'), backgroundColor: Colors.red)
-      );
-    } finally {
-      if (mounted) setState(() => muat = false);
-    }
-  }
-
-  Future<void> keluarAkun() async {
-    await _layAuth.keluar();
-    if (mounted) context.go('/masuk');
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Profil Saya')),
-      body: SafeArea(
-        child: muatData
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: FormBuilder(
-                key: _f,
-                initialValue: {
-                  'nama': dataProfil?.nama ?? '',
-                  'email': dataProfil?.email ?? '',
-                  'noHp': dataProfil?.noHp ?? '',
-                },
-                child: Column(
-                  children: [
-                    const CircleAvatar(
-                      radius: 50,
-                      backgroundColor: AppTheme.warnaUtama,
-                      child: Icon(Icons.person, size: 50, color: Colors.white),
-                    ),
-                    const SizedBox(height: 30),
-
-                    FormBuilderTextField(
-                      name: 'nama',
-                      decoration: const InputDecoration(labelText: 'Nama Lengkap'),
-                      validator: FormBuilderValidators.required(),
-                    ),
-                    const SizedBox(height: 15),
-
-                    FormBuilderTextField(
-                      name: 'email',
-                      decoration: const InputDecoration(labelText: 'Email', helperText: 'Email tidak bisa diubah'),
-                      enabled: false,
-                    ),
-                    const SizedBox(height: 15),
-
-                    FormBuilderTextField(
-                      name: 'noHp',
-                      decoration: const InputDecoration(labelText: 'Nomor HP'),
-                      keyboardType: TextInputType.phone,
-                      validator: FormBuilderValidators.compose([
-                        FormBuilderValidators.required(),
-                        FormBuilderValidators.numeric(),
-                        FormBuilderValidators.minLength(10),
-                      ]),
-                    ),
-                    const SizedBox(height: 30),
-
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: muat ? null : simpanPerubahan,
-                        child: muat
-                          ? const SizedBox(width:22, height:22, child: CircularProgressIndicator(strokeWidth:2, color:Colors.white))
-                          : const Text('SIMPAN PERUBAHAN', style: TextStyle(fontSize: 16)),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.logout, color: Colors.red),
-                        label: const Text('Keluar Akun', style: TextStyle(color: Colors.red)),
-                        onPressed: () => showDialog(
-                          context: context,
-                          builder: (c) => AlertDialog(
-                            title: const Text('Konfirmasi'),
-                            content: const Text('Yakin ingin keluar dari akun ini?'),
-                            actions: [
-                              TextButton(onPressed: ()=>Navigator.pop(c), child: const Text('Batal')),
-                              TextButton(onPressed: (){Navigator.pop(c); keluarAkun();}, child: const Text('Keluar', style: TextStyle(color: Colors.red))),
-                            ],
-                          ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(dataPenggunaProvider);
+          await Future.delayed(const Duration(milliseconds: 500));
+        },
+        child: data.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e,s) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [SizedBox(height: MediaQuery.of(context).size.height/3, child: Center(child: Text('Error: $e')))],
+          ),
+          data: (pengguna) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            children: [
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => context.push('/ubah-profil', extra: pengguna),
+                        child: CircleAvatar(
+                          radius: 40,
+                          backgroundColor: Colors.grey[200],
+                          backgroundImage: pengguna.fotoUrl.isNotEmpty ? CachedNetworkImageProvider(pengguna.fotoUrl) : null,
+                          child: pengguna.fotoUrl.isEmpty ? const Icon(Icons.person, size: 40, color: Colors.grey) : null,
                         ),
                       ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(pengguna.nama.isEmpty ? 'Pengguna' : pengguna.nama, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 4),
+                            Text(pengguna.email, style: TextStyle(color: Colors.grey[600])),
+                            if(pengguna.noHp.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(pengguna.noHp, style: TextStyle(color: Colors.grey[600])),
+                            ],
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Icon(Icons.check_circle, color: Colors.green[700], size: 16),
+                                const SizedBox(width: 4),
+                                Text('Aktif sejak ${DateFormat('d MMM yyyy').format(pengguna.dibuatPada)}', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              const Text('Akun', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 8),
+              Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.edit),
+                      title: const Text('Ubah Profil'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push('/ubah-profil', extra: pengguna),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.location_on),
+                      title: const Text('Alamat Pengiriman'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push('/daftar-alamat'),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.shopping_bag),
+                      title: const Text('Pesanan Saya'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.go('/riwayat'),
                     ),
                   ],
                 ),
               ),
-            ),
+              const SizedBox(height: 20),
+
+              const Text('Tentang', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 8),
+              Card(
+                child: Column(
+                  children: [
+                    const ListTile(leading: Icon(Icons.info_outline), title: Text('Versi Aplikasi'), subtitle: Text('1.0.0')),
+                    const Divider(height: 1),
+                    ListTile(leading: const Icon(Icons.description_outlined), title: const Text('Syarat & Ketentuan'), trailing: const Icon(Icons.chevron_right), onTap: () {}),
+                    const Divider(height: 1),
+                    ListTile(leading: const Icon(Icons.privacy_tip_outlined), title: const Text('Kebijakan Privasi'), trailing: const Icon(Icons.chevron_right), onTap: () {}),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Keluar Akun', style: TextStyle(fontSize: 16)),
+                  onPressed: () async {
+                    final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
+                      title: const Text('Keluar Akun?'),
+                      content: const Text('Semua data lokal akan dibersihkan'),
+                      actions: [
+                        TextButton(onPressed: ()=>Navigator.pop(c,false), child: const Text('Batal')),
+                        TextButton(onPressed: ()=>Navigator.pop(c,true), style: TextButton.styleFrom(foregroundColor: Colors.red), child: const Text('Keluar')),
+                      ],
+                    ));
+                    if(ok == true) {
+                      await PenggunaService().keluar();
+                      ref.invalidateAll();
+                      ref.read(keranjangProvider.notifier).kosongkan();
+                      if(context.mounted) context.go('/masuk');
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
       ),
     );
   }
