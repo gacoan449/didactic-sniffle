@@ -7,6 +7,7 @@ import '../screens/umum/pengendali_menu.dart';
 import '../screens/umum/profil.dart';
 import '../screens/umum/produk_daftar.dart';
 import '../screens/umum/pencarian.dart';
+import '../screens/customer/wishlist.dart';
 import '../screens/customer/keranjang.dart';
 import '../screens/customer/checkout.dart';
 import '../screens/customer/riwayat_pesanan.dart';
@@ -29,6 +30,7 @@ final AppRoutes = GoRouter(
     GoRoute(path: '/profil', builder: (c, s) => const HalamanProfil()),
     GoRoute(path: '/ubah-profil', builder: (c, s) => HalamanUbahProfil(pengguna: s.extra as PenggunaModel?)),
     GoRoute(path: '/produk', builder: (c, s) => const HalamanDaftarProduk()),
+    GoRoute(path: '/favorit', builder: (c, s) => const HalamanWishlist()),
     GoRoute(path: '/cari', builder: (c, s) => const HalamanPencarian()),
     GoRoute(path: '/keranjang', builder: (c, s) => const HalamanKeranjang()),
     GoRoute(path: '/checkout', builder: (c, s) => const HalamanCheckout()),
