@@ -1,0 +1,23 @@
+⚠️ PENGATURAN YANG HARUS DIBUAT DI FIREBASE KONSOL:
+
+1. BUAT COMPOSITE INDEX:
+   Koleksi: produk
+   - Field: tersedia (Ascending) + dibuatPada (Descending)
+   - Field: tersedia (Ascending) + harga (Ascending)
+   - Field: tersedia (Ascending) + harga (Descending)
+   - Field: tersedia (Ascending) + jumlahTerjual (Descending)
+   - Field: tersedia (Ascending) + flashSale (Equal) + dibuatPada (Descending)
+   - Field: tersedia (Ascending) + produkBaru (Equal) + dibuatPada (Descending)
+   - Field: tersedia (Ascending) + organik (Equal) + dibuatPada (Descending)
+   - Field: tersedia (Ascending) + keyword (Array-contains)
+
+2. SETIAP DOKUMEN PRODUK WAJIB PUNYA FIELD DEFAULT:
+   jumlahTerjual: 0
+   keyword: ["namaProdukKecil", "kategori", "deskripsiSingkat"]
+
+3. CARA KERJA PENCARINGAN SEKARANG:
+   - Simpan semua kata kunci penting ke dalam field keyword (tipe Array)
+   - Pencarian bisa menemukan kata di tengah kalimat, bukan hanya awalan
+   - Nanti bisa ditingkatkan ke Meilisearch/Algolia saat skala besar
+
+✅ SEMUA KODE SEKARANG SUDAH KONSISTEN & AMAN
