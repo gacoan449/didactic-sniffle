@@ -1,132 +1,41 @@
-import 'package:flutter/material.dart';
-import '../models/product_model.dart';
+class CartModel {
+  final String id;
+  final String namaProduk;
+  final String gambar;
+  final double harga;
+  int jumlah;
 
-class ProductDetailScreen extends StatelessWidget {
-  final ProductModel product;
-
-  const ProductDetailScreen({
-    super.key,
-    required this.product,
+  CartModel({
+    required this.id,
+    required this.namaProduk,
+    required this.gambar,
+    required this.harga,
+    required this.jumlah,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(product.nama),
-        backgroundColor: Colors.green,
-      ),
-
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-
-            Container(
-              height: 280,
-              width: double.infinity,
-              color: Colors.green.shade100,
-              child: const Icon(
-                Icons.shopping_basket,
-                size: 120,
-                color: Colors.green,
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.all(16),
-
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-
-                children: [
-
-                  Text(
-                    product.nama,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height:10),
-
-                  Text(
-                    "Rp ${product.harga}",
-                    style: const TextStyle(
-                      fontSize:22,
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height:10),
-
-                  Text("Stok : ${product.stok}"),
-
-                  Text("Rating : ⭐ ${product.rating}"),
-
-                  Text("Diskon : ${product.diskon}%"),
-
-                  const SizedBox(height:20),
-
-                  const Text(
-                    "Deskripsi Produk",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize:18,
-                    ),
-                  ),
-
-                  const SizedBox(height:10),
-
-                  const Text(
-                    "Produk segar langsung dari Petani Desa Berkah. "
-                    "Dipanen setiap hari sehingga kualitas tetap terjaga.",
-                  ),
-
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(12),
-
-        child: Row(
-
-          children: [
-
-            Expanded(
-              child: ElevatedButton(
-
-                onPressed: () {},
-
-                child: const Text("Tambah Keranjang"),
-
-              ),
-            ),
-
-            const SizedBox(width:10),
-
-            Expanded(
-              child: ElevatedButton(
-
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                ),
-
-                onPressed: () {},
-
-                child: const Text("Beli Sekarang"),
-
-              ),
-            ),
-          ],
-        ),
-      ),
+  factory CartModel.fromMap(Map<String, dynamic> map) {
+    return CartModel(
+      id: map['id'] as String,
+      namaProduk: map['namaProduk'] as String,
+      gambar: map['gambar'] as String,
+      harga: (map['harga'] as num).toDouble(),
+      jumlah: map['jumlah'] as int,
     );
   }
-}
+
+  Map<String, dynamic> keMap() => {
+    'id': id,
+    'namaProduk': namaProduk,
+    'gambar': gambar,
+    'harga': harga,
+    'jumlah': jumlah,
+  };
+
+  static void tambahAtauUpdate(List<CartModel> daftar, CartModel barangBaru) {
+    final indeks = daftar.indexWhere((b) => b.id == barangBaru.id);
+    if (indeks >= 0) {
+      daftar[indeks].jumlah += barangBaru.jumlah;
+    } else {
+      daftar.add(barangBaru);
+    }
+  }

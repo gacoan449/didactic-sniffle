@@ -1,27 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-import 'screens/beranda.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'config/routes.dart';
+import 'config/theme.dart';
+import 'config/app_config.dart';
+import 'core/di/injection.dart';
+import 'services/firebase_service.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const MyApp());
+
+  await dotenv.load(fileName: AppConfig.modeDebug ? '.env.development' : '.env.production');
+
+  await LayananFirebase.inisialisasi();
+
+  await setupDependencyInjection();
+
+  FlutterError.onError = (d) => FlutterError.presentError(d);
+  PlatformDispatcher.instance.onError = (e,s) { debugPrint('ERROR GLOBAL: $e'); debugPrint('JEJAK: $s'); return true; };
+
+  runApp(const ProviderScope(child: AplikasiUtama()));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class AplikasiUtama extends StatelessWidget {
+  const AplikasiUtama({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Petani Desa Berkah',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        useMaterial3: true,
-      ),
-      home: const HalamanUtama(),
+    return MaterialApp.router(
+      title: AppConfig.namaAplikasi,
+      debugShowCheckedModeBanner: AppConfig.modeDebug,
+      routerConfig: AppRoutes,
+      theme: AppTheme.terang,
+      darkTheme: AppTheme.gelap,
+      themeMode: ThemeMode.system,
     );
   }
 }

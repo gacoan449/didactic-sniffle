@@ -1,16 +1,14 @@
+# Flutter/Dart
 .dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
 .packages
+.pub/
 build/
-.idea/
-.vscode/
-android/.gradle/
-android/local.properties
-ios/Pods/
-ios/.symlinks/
-*.logcmdline-tools.zip
-*.zip
-build/
-.dart_tool/
-*.zip
-build/
-.dart_tool/
+
+# Android
+android/app/src/main/java/io/flutter/plugins/
+android/key.properties
+
+# Lainnya
+*.log
