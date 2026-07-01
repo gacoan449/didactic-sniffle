@@ -72,3 +72,7 @@ final AppRoutes = GoRouter(
     ),
   ],
 );
+  GoRoute(
+    path: '/detail-transaksi/:id',
+    builder: (context, state) => HalamanDetailTransaksi(transaksiId: state.pathParameters['id']!),
+  ),

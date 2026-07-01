@@ -6,7 +6,9 @@ import 'config/theme.dart';
 import 'config/routes.dart';
 
 void main() async {
+import "services/hive_service.dart";
   WidgetsFlutterBinding.ensureInitialized();
+await LayananHive.inisialisasi();
 
   // Daftarkan Bahasa Indonesia untuk Timeago
   timeago.setLocaleMessages('id', timeago.IdMessages());
