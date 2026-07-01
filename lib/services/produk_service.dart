@@ -1,16 +1,24 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../repositories/produk_repo.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/produk_model.dart';
+import 'firebase_service.dart';
 
 class ProdukService {
-  final ProdukRepository repo;
-  ProdukService(this.repo);
+  final FirebaseFirestore _db = LayananFirebase.db;
 
-  Stream<List<ProdukModel>> ambilSemuaProduk() => repo.ambilSemua();
-  Future<List<ProdukModel>> cariProduk(String kata) => repo.cari(kata);
-  Future<List<ProdukModel>> ambilKategori(String kat) => repo.ambilKategori(kat);
+  Stream<List<ProdukModel>> ambilSemua() {
+    return _db.collection('produk')
+      .orderBy('nama')
+      .snapshots()
+      .map((snap) => snap.docs.map((doc) => ProdukModel.dariMap(doc.data(), doc.id)).toList());
+  }
+
+  Future<List<ProdukModel>> cariProduk(String kataKunci) async {
+    final kunci = kataKunci.toLowerCase();
+    final snap = await _db.collection('produk')
+      .where('namaLower', isGreaterThanOrEqualTo: kunci)
+      .where('namaLower', isLessThanOrEqualTo: '$kunci\uf8ff')
+      .limit(20)
+      .get();
+    return snap.docs.map((doc) => ProdukModel.dariMap(doc.data(), doc.id)).toList();
+  }
 }
-
-final produkServiceProvider = Provider<ProdukService>((ref) {
-  return ProdukService(ref.watch(produkRepoProvider));
-});
