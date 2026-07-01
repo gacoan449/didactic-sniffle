@@ -2,12 +2,13 @@ import 'package:go_router/go_router.dart';
 import '../screens/splash_screen.dart';
 import '../screens/auth/masuk_pembeli.dart';
 import '../screens/auth/daftar_pembeli.dart';
+import '../screens/auth/masuk_hp.dart';
 import '../screens/kasir/login_kasir.dart';
 import '../screens/kasir/dashboard_kasir.dart';
 import '../screens/kasir/buat_transaksi.dart';
-import '../screens/kasir/shift_kasir.dart';
-import '../screens/kasir/scan_barcode.dart';
-import '../screens/kasir/detail_transaksi.dart';
+import '../screens/umum/riwayat_aktivitas.dart';
+import '../screens/supplier/beranda_supplier.dart';
+import '../screens/customer/pilih_kurir.dart';
 
 final router = GoRouter(
   initialLocation: '/splash',
@@ -21,6 +22,7 @@ final router = GoRouter(
       path: '/daftar-pembeli',
       builder: (c, s) => const HalamanDaftarPembeli(),
     ),
+    GoRoute(path: '/masuk-hp', builder: (c, s) => const HalamanMasukHP()),
     GoRoute(path: '/masuk-kasir', builder: (c, s) => const HalamanLoginKasir()),
     GoRoute(
       path: '/kasir-dashboard',
@@ -31,17 +33,13 @@ final router = GoRouter(
       builder: (c, s) => const HalamanBuatTransaksi(),
     ),
     GoRoute(
-      path: '/shift-kasir',
-      builder: (c, s) => const HalamanShiftKasir(kasirId: ''),
+      path: '/riwayat-aktivitas',
+      builder: (c, s) => const HalamanRiwayatAktivitas(),
     ),
     GoRoute(
-      path: '/scan-barcode',
-      builder: (c, s) => const HalamanScanBarcode(),
+      path: '/supplier',
+      builder: (c, s) => const HalamanBerandaSupplier(),
     ),
-    GoRoute(
-      path: '/detail-transaksi/:id',
-      builder: (c, s) =>
-          HalamanDetailTransaksi(transaksiId: s.pathParameters['id']!),
-    ),
+    GoRoute(path: '/pilih-kurir', builder: (c, s) => const HalamanPilihKurir()),
   ],
 );

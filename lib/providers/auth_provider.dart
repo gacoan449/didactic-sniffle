@@ -1,31 +1,37 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../models/pengguna_model.dart';
 import '../services/auth_service.dart';
 
-final authProvider = NotifierProvider<AuthNotifier, AsyncValue<User?>>(
-  AuthNotifier.new,
-);
+final layananAuthProvider = Provider<LayananAuth>((ref) => LayananAuth());
 
-class AuthNotifier extends Notifier<AsyncValue<User?>> {
-  StreamSubscription<User?>? _langgananAuth;
+// ✅ SUDAH DIDEKLARASIKAN DENGAN JELAS
+final penggunaSaatIniProvider = StateProvider<PenggunaModel?>((ref) => null);
 
-  @override
-  AsyncValue<User?> build() {
-    state = const AsyncValue.loading();
-    _langgananAuth = AuthService().aliranPengguna.listen(
-      (user) {
-        state = AsyncValue.data(user);
-      },
-      onError: (e, s) {
-        state = AsyncValue.error(e, s);
-      },
-    );
-
-    // Batalkan langganan otomatis saat provider dibuang
-    ref.onDispose(() {
-      _langgananAuth?.cancel();
+final daftarProvider =
+    FutureProvider.family<PenggunaModel, Map<String, String>>((
+      ref,
+      data,
+    ) async {
+      return ref
+          .read(layananAuthProvider)
+          .daftarDenganEmail(
+            nama: data['nama']!,
+            email: data['email']!,
+            password: data['sandi']!,
+            nomorHP: data['hp']!,
+          );
     });
 
-    return const AsyncValue.data(null);
-  }
-}
+final masukEmailProvider =
+    FutureProvider.family<PenggunaModel, Map<String, String>>((
+      ref,
+      data,
+    ) async {
+      return ref
+          .read(layananAuthProvider)
+          .masukDenganEmail(data['email']!, data['sandi']!);
+    });
+
+final masukGoogleProvider = FutureProvider<PenggunaModel>((ref) async {
+  return ref.read(layananAuthProvider).masukDenganGoogle();
+});

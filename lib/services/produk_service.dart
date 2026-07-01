@@ -1,151 +1,128 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../models/produk_model.dart';
-import '../models/kategori_model.dart';
-import '../models/ulasan_model.dart';
-import '../models/tanya_jawab_model.dart';
-import 'firebase_service.dart';
 
-enum Urutkan { terbaru, termurah, termahal, terlaris }
+class LayananProduk {
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
-class ProdukService {
-  final FirebaseFirestore _db = LayananFirebase.db;
-
-  Stream<List<KategoriModel>> daftarKategori() {
-    return _db
-        .collection('kategori')
-        .orderBy('nama')
-        .snapshots()
-        .map(
-          (s) =>
-              s.docs.map((d) => KategoriModel.dariMap(d.data(), d.id)).toList(),
-        );
+  Future<String> unggahFoto(XFile file, String produkId) async {
+    final ref = _storage.ref().child(
+      'produk/$produkId/${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
+    await ref.putFile(File(file.path));
+    return await ref.getDownloadURL();
   }
 
-  Query _queryDasar({String? kategoriId}) {
-    Query query = _db.collection('produk').where('tersedia', isEqualTo: true);
-    if (kategoriId != null && kategoriId.isNotEmpty) {
-      query = query.where('kategoriId', isEqualTo: kategoriId);
-    }
-    return query;
+  Future<String> buatKodeProduk() async {
+    final now = DateTime.now();
+    return 'PRD${now.millisecondsSinceEpoch.toString().substring(5)}';
   }
 
-  Stream<List<ProdukModel>> daftarProduk({
-    String? kategoriId,
-    Urutkan urut = Urutkan.terbaru,
-  }) {
-    Query query = _queryDasar(kategoriId: kategoriId);
-    switch (urut) {
-      case Urutkan.terbaru:
-        query = query.orderBy('dibuatPada', descending: true);
-        break;
-      case Urutkan.termurah:
-        query = query.orderBy('harga', descending: false);
-        break;
-      case Urutkan.termahal:
-        query = query.orderBy('harga', descending: true);
-        break;
-      case Urutkan.terlaris:
-        // Aman meski field belum ada, karena sudah di-set default 0 di model
-        query = query.orderBy('jumlahTerjual', descending: true);
-        break;
-    }
-    return query
-        .limit(20)
-        .snapshots()
-        .map(
-          (s) =>
-              s.docs.map((d) => ProdukModel.dariMap(d.data(), d.id)).toList(),
-        );
+  Future<List<ProdukModel>> ambilSemua({bool hanyaAktif = true}) async {
+    Query q = _db.collection('produk');
+    if (hanyaAktif) q = q.where('aktif', isEqualTo: true);
+    final snap = await q.get();
+    return snap.docs.map((d) => ProdukModel.dariMap(d.data(), d.id)).toList();
   }
 
-  Stream<List<ProdukModel>> produkFlashSale() {
-    return _queryDasar()
-        .where('flashSale', isEqualTo: true)
-        .orderBy('dibuatPada', descending: true)
+  Future<List<ProdukModel>> cari(String kataKunci) async {
+    final snap = await _db
+        .collection('produk')
+        .where('aktif', isEqualTo: true)
+        .get();
+    return snap.docs
+        .map((d) => ProdukModel.dariMap(d.data(), d.id))
+        .where(
+          (p) => p.namaProduk.toLowerCase().contains(kataKunci.toLowerCase()),
+        )
+        .toList();
+  }
+
+  Future<List<ProdukModel>> ambilTerlaris() async {
+    final snap = await _db
+        .collection('produk')
+        .where('aktif', isEqualTo: true)
+        .where('terlaris', isEqualTo: true)
         .limit(10)
-        .snapshots()
-        .map(
-          (s) =>
-              s.docs.map((d) => ProdukModel.dariMap(d.data(), d.id)).toList(),
-        );
+        .get();
+    return snap.docs.map((d) => ProdukModel.dariMap(d.data(), d.id)).toList();
   }
 
-  Stream<List<ProdukModel>> produkBaru() {
-    return _queryDasar()
+  Future<List<ProdukModel>> ambilProdukBaru() async {
+    final snap = await _db
+        .collection('produk')
+        .where('aktif', isEqualTo: true)
         .where('produkBaru', isEqualTo: true)
         .orderBy('dibuatPada', descending: true)
         .limit(10)
-        .snapshots()
-        .map(
-          (s) =>
-              s.docs.map((d) => ProdukModel.dariMap(d.data(), d.id)).toList(),
-        );
-  }
-
-  Stream<List<ProdukModel>> produkTerlaris() {
-    return _queryDasar()
-        .orderBy('jumlahTerjual', descending: true)
-        .limit(10)
-        .snapshots()
-        .map(
-          (s) =>
-              s.docs.map((d) => ProdukModel.dariMap(d.data(), d.id)).toList(),
-        );
-  }
-
-  Stream<List<ProdukModel>> produkOrganik() {
-    return _queryDasar()
-        .where('organik', isEqualTo: true)
-        .orderBy('dibuatPada', descending: true)
-        .limit(10)
-        .snapshots()
-        .map(
-          (s) =>
-              s.docs.map((d) => ProdukModel.dariMap(d.data(), d.id)).toList(),
-        );
-  }
-
-  Future<List<ProdukModel>> cariProduk(String kataKunci) async {
-    if (kataKunci.trim().isEmpty) return [];
-    final kunci = kataKunci.trim().toLowerCase();
-
-    // ✅ Gunakan keyword terindeks agar bisa pencarian mengandung
-    final hasil = await _db
-        .collection('produk')
-        .where('tersedia', isEqualTo: true)
-        .where('keyword', arrayContains: kunci)
-        .limit(30)
         .get();
-
-    return hasil.docs.map((d) => ProdukModel.dariMap(d.data(), d.id)).toList();
+    return snap.docs.map((d) => ProdukModel.dariMap(d.data(), d.id)).toList();
   }
 
-  Stream<List<UlasanModel>> daftarUlasan(String produkId) {
-    return _db
+  // ✅ METODE ULASAN DAN LAINNYA SUDAH BERADA DI DALAM CLASS
+  Future<void> tambahUlasan(String produkId, UlasanProduk ulasan) async {
+    await _db
         .collection('produk')
         .doc(produkId)
         .collection('ulasan')
-        .orderBy('dibuatPada', descending: true)
-        .limit(10)
-        .snapshots()
-        .map(
-          (s) =>
-              s.docs.map((d) => UlasanModel.dariMap(d.data(), d.id)).toList(),
-        );
+        .add(ulasan.keMap());
+    await _db.collection('produk').doc(produkId).update({
+      'jumlahUlasan': FieldValue.increment(1),
+    });
   }
 
-  Stream<List<TanyaJawabModel>> daftarTanyaJawab(String produkId) {
-    return _db
+  Future<List<ProdukModel>> ambilFlashSaleAktif() async {
+    final sekarang = DateTime.now();
+    final snap = await _db
         .collection('produk')
-        .doc(produkId)
-        .collection('tanyajawab')
-        .orderBy('tglTanya', descending: true)
-        .limit(10)
-        .snapshots()
-        .map(
-          (s) => s.docs
-              .map((d) => TanyaJawabModel.dariMap(d.data(), d.id))
-              .toList(),
-        );
+        .where('flashSale', isEqualTo: true)
+        .where('aktif', isEqualTo: true)
+        .where('diskonPersen', isGreaterThan: 0)
+        .get();
+    return snap.docs.map((d) => ProdukModel.dariMap(d.data(), d.id)).toList();
+  }
+
+  Future<List<ProdukModel>> ambilProdukSerupa(
+    String kategoriId,
+    String produkId,
+  ) async {
+    final snap = await _db
+        .collection('produk')
+        .where('aktif', isEqualTo: true)
+        .limit(6)
+        .get();
+    return snap.docs
+        .where((d) => d.id != produkId)
+        .map((d) => ProdukModel.dariMap(d.data(), d.id))
+        .toList();
+  }
+
+  Future<List<ProdukModel>> ambilMilikSupplier(String supplierId) async {
+    final snap = await _db
+        .collection('produk')
+        .where('supplierId', isEqualTo: supplierId)
+        .orderBy('dibuatPada', descending: true)
+        .get();
+    return snap.docs.map((d) => ProdukModel.dariMap(d.data(), d.id)).toList();
+  }
+
+  Future<ProdukModel> simpanProduk(ProdukModel produk) async {
+    final ref = _db
+        .collection('produk')
+        .doc(produk.id.isEmpty ? null : produk.id);
+    final data = produk.keMap();
+    data['diperbaruiPada'] = FieldValue.serverTimestamp();
+    await ref.set(data, SetOptions(merge: true));
+    return ProdukModel.dariMap(data, ref.id);
+  }
+
+  Future<void> ubahStok(String produkId, int jumlah) async {
+    await _db.collection('produk').doc(produkId).update({
+      'stok': FieldValue.increment(jumlah),
+      'diperbaruiPada': FieldValue.serverTimestamp(),
+    });
   }
 }
