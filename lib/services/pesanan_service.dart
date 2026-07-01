@@ -1,65 +1,146 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
 import '../models/pesanan_model.dart';
+import '../models/keranjang_model.dart';
 import '../models/produk_model.dart';
 import 'firebase_service.dart';
 
 class PesananService {
   final FirebaseFirestore _db = LayananFirebase.db;
-  final FirebaseAuth _auth = LayananFirebase.auth;
+  final String? uid = FirebaseAuth.instance.currentUser?.uid;
 
-  String buatNoPesanan(String docId) {
-    final tanggal = DateFormat('yyyyMMdd').format(DateTime.now());
-    return 'PDB-$tanggal-${docId.substring(0, 6).toUpperCase()}';
+  String _buatKodePesanan() {
+    return 'ORD-${DateTime.now().millisecondsSinceEpoch}-${uid?.substring(0, 6) ?? "USER"}';
   }
 
-  Future<void> buatPesanan(
-    PesananModel pesanan,
-    List<ProdukModel> daftarProduk,
-  ) async {
-    if (_auth.currentUser == null) throw 'Silakan masuk terlebih dahulu';
-    final uid = _auth.currentUser!.uid;
+  Future<bool> cekStokDanKunci(List<KeranjangModel> keranjang) async {
+    final batch = _db.batch();
+    for (final item in keranjang) {
+      final doc = await _db.collection('produk').doc(item.produkId).get();
+      if (!doc.exists) return false;
+      final stokSekarang = doc.data()?['stok'] as int? ?? 0;
+      if (stokSekarang < item.jumlah) return false;
+      batch.update(doc.reference, {'stok': stokSekarang - item.jumlah});
+    }
+    await batch.commit();
+    return true;
+  }
 
-    await _db.runTransaction((trans) async {
-      // 1. Cek & Validasi Stok Terbaru
-      for (final barang in pesanan.barang) {
-        final docProduk = await trans.get(
-          _db.collection('produk').doc(barang.produkId),
-        );
-        if (!docProduk.exists) throw 'Produk ${barang.nama} tidak ditemukan';
+  Future<String> simpanPesanan({
+    required String namaPembeli,
+    required String nomorHP,
+    required String alamat,
+    required List<KeranjangModel> keranjang,
+    required double totalProduk,
+    required double ongkir,
+    required String kirim,
+    required String bayar,
+  }) async {
+    if (uid == null) throw 'Silakan masuk terlebih dahulu';
+    if (keranjang.isEmpty) throw Exception('Keranjang masih kosong');
 
-        final data = ProdukModel.dariMap(docProduk.data()!, docProduk.id);
-        if (data.stok < barang.jumlah)
-          throw 'Stok ${barang.nama} tinggal ${data.stok}, tidak cukup';
+    final ok = await cekStokDanKunci(keranjang);
+    if (!ok) throw 'Stok produk tidak cukup atau sudah habis';
 
-        // 2. Kurangi Stok Produk
-        trans.update(docProduk.reference, {'stok': data.stok - barang.jumlah});
-      }
+    final daftarItem = keranjang
+        .map(
+          (k) => ItemPesanan(
+            produkId: k.produkId,
+            namaProduk: k.namaProduk,
+            gambar: k.gambar,
+            harga: k.harga,
+            jumlah: k.jumlah,
+            namaToko: k.namaToko,
+            penjualId: k.penjualId,
+          ),
+        )
+        .toList();
 
-      // 3. Simpan Pesanan Utama di collection 'pesanan'
-      final docPesanan = _db.collection('pesanan').doc();
-      final noPesanan = buatNoPesanan(docPesanan.id);
+    final pesanan = PesananModel(
+      id: '',
+      kodePesanan: _buatKodePesanan(),
+      pembeliId: uid!,
+      namaPembeli: namaPembeli,
+      nomorHP: nomorHP,
+      alamatLengkap: alamat,
+      daftarItem: daftarItem,
+      totalProduk: totalProduk,
+      ongkir: ongkir,
+      totalBayar: totalProduk + ongkir,
+      metodePengiriman: kirim,
+      metodePembayaran: bayar,
+      status: StatusPesanan.menungguDibayar,
+      dibuatPada: DateTime.now(),
+    );
 
-      trans.set(docPesanan, {...pesanan.keMap(), 'noPesanan': noPesanan});
+    final ref = await _db.collection('pesanan').add(pesanan.keMap());
+
+    // Simpan Aktivitas Pengguna
+    await _db.collection('pengguna').doc(uid).collection('aktivitas').add({
+      'judul': 'Pesanan Baru',
+      'keterangan': 'Pesanan berhasil dibuat',
+      'waktu': FieldValue.serverTimestamp(),
     });
+
+    // Simpan Notifikasi
+    await _db.collection('pengguna').doc(uid).collection('notifikasi').add({
+      'judul': 'Pesanan Berhasil',
+      'isi': 'Pesanan Anda berhasil dibuat.',
+      'tipe': 'pesanan',
+      'dibuatPada': FieldValue.serverTimestamp(),
+      'sudahDibaca': false,
+    });
+
+    return ref.id;
   }
 
-  Stream<List<PesananModel>> ambilPesananPengguna(String uid) {
+  Stream<List<PesananModel>> riwayatPesanan() {
+    if (uid == null) return Stream.value([]);
     return _db
         .collection('pesanan')
-        .where('pembeliUid', isEqualTo: uid)
+        .where('pembeliId', isEqualTo: uid)
         .orderBy('dibuatPada', descending: true)
+        .limit(50)
         .snapshots()
         .map(
-          (snap) => snap.docs
-              .map(
-                (doc) => PesananModel.dariMap(
-                  doc.data() as Map<String, dynamic>,
-                  doc.id,
-                ),
-              )
-              .toList(),
+          (s) =>
+              s.docs.map((d) => PesananModel.dariMap(d.data(), d.id)).toList(),
         );
+  }
+
+  Future<void> batalkanPesanan(String pesananId) async {
+    if (uid == null) throw 'Silakan masuk terlebih dahulu';
+
+    await _db.runTransaction((transaksi) async {
+      final docPesanan = await transaksi.get(
+        _db.collection('pesanan').doc(pesananId),
+      );
+      if (!docPesanan.exists) throw 'Pesanan tidak ditemukan';
+
+      final data = PesananModel.dariMap(docPesanan.data()!, docPesanan.id);
+      if (data.status == StatusPesanan.selesai ||
+          data.status == StatusPesanan.dikirim) {
+        throw 'Pesanan tidak bisa dibatalkan';
+      }
+
+      // Kembalikan stok produk
+      for (final item in data.daftarItem) {
+        final docProduk = await transaksi.get(
+          _db.collection('produk').doc(item.produkId),
+        );
+        if (docProduk.exists) {
+          final stokSekarang = docProduk.data()?['stok'] as int? ?? 0;
+          transaksi.update(docProduk.reference, {
+            'stok': stokSekarang + item.jumlah,
+          });
+        }
+      }
+
+      // Ubah status pesanan
+      transaksi.update(docPesanan.reference, {
+        'status': StatusPesanan.dibatalkan.name,
+        'diperbaruiPada': FieldValue.serverTimestamp(),
+      });
+    });
   }
 }
