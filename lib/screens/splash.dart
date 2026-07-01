@@ -40,7 +40,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       await Future.delayed(const Duration(milliseconds: 300));
 
       if (mounted) {
-        context.go('/beranda');
+        if (await CekLayanan.cekLogin()) {
+          context.go('/beranda');
+        } else {
+          context.go('/masuk');
+        }
       }
     } catch (e) {
       tampilkanPesan('Terjadi kesalahan: $e');
