@@ -5,7 +5,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "idPembeli", "order": "ASCENDING" },
-        { "fieldPath": "dipesanPada", "order": "DESCENDING" }
+        { "fieldPath": "dibuatPada", "order": "DESCENDING" }
       ]
     },
     {
@@ -13,8 +13,25 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "idToko", "order": "ASCENDING" },
-        { "fieldPath": "dipesanPada", "order": "DESCENDING" }
+        { "fieldPath": "dibuatPada", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "produk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idToko", "order": "ASCENDING" },
+        { "fieldPath": "dibuatPada", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "riwayatStok",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idProduk", "order": "ASCENDING" },
+        { "fieldPath": "waktu", "order": "DESCENDING" }
       ]
     }
-  ]
+  ],
+  "fieldOverrides": []
 }

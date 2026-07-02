@@ -7,261 +7,227 @@ import 'logger_service.dart';
 class LayananProduk {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  static const int BATAS_HALAMAN = 20;
 
   String get uid => _auth.currentUser?.uid ?? '';
+  String get namaPengguna =>
+      _auth.currentUser?.displayName ?? 'Pengguna Tidak Dikenal';
 
-  // ====== CRUD PRODUK ======
-  Future<String> tambahProduk(Produk produk) async {
+  /// ✅ Singleton yang benar-benar aman
+  factory LayananProduk() => instance;
+  static final LayananProduk instance = LayananProduk._internal();
+  LayananProduk._internal();
+
+  Future<String> tambahProduk(
+    Produk produk, {
+    String? deviceID,
+    String? ipAddress,
+    String versiAplikasi = '1.0.0',
+  }) async {
     if (uid.isEmpty) throw Exception("Belum login");
     if (!produk.apakahValid())
-      throw Exception("Data produk tidak lengkap atau tidak valid");
+      throw Exception("Data produk tidak lengkap/tidak valid");
 
-    try {
-      final ref = _db.collection(Konstanta.KOLEKSI_PRODUK).doc();
-      final produkDenganId = produk.copyWith(id: ref.id);
-      await ref.set(produkDenganId.toCreateMap());
-      return ref.id;
-    } catch (e, t) {
-      LayananLog.error("Tambah produk gagal", e, t);
-      rethrow;
-    }
-  }
+    final refProduk = _db.collection(Konstanta.KOLEKSI_PRODUK).doc();
+    final produkBaru = produk.copyWith(
+      id: refProduk.id,
+      dibuatOleh: uid,
+      diubahOleh: uid,
+      deviceID: deviceID,
+      ipAddress: ipAddress,
+      versiAplikasi: versiAplikasi,
+    );
 
-  Future<void> ubahProduk(String idProduk, Produk produk) async {
-    if (uid.isEmpty) return;
-    if (!produk.apakahValid())
-      throw Exception("Data produk tidak lengkap atau tidak valid");
-
-    try {
-      await _db
-          .collection(Konstanta.KOLEKSI_PRODUK)
-          .doc(idProduk)
-          .update(produk.toUpdateMap());
-    } catch (e, t) {
-      LayananLog.error("Ubah produk gagal", e, t);
-      rethrow;
-    }
-  }
-
-  Future<void> hapusProduk(String idProduk) async {
-    if (uid.isEmpty) return;
-    try {
-      await _db
-          .collection(Konstanta.KOLEKSI_PRODUK)
-          .doc(idProduk)
-          .update(Produk.softDeleteMap(uid));
-    } catch (e, t) {
-      LayananLog.error("Hapus produk gagal", e, t);
-      rethrow;
-    }
-  }
-
-  Stream<Produk?> ambilProduk(String idProduk) {
-    return _db
-        .collection(Konstanta.KOLEKSI_PRODUK)
-        .doc(idProduk)
-        .snapshots()
-        .map((d) => d.exists ? Produk.fromMap(d.id, d.data()!) : null);
-  }
-
-  // ====== DAFTAR PRODUK DENGAN PAGINASI AMAN ======
-  Query _filterDasar() {
-    return _db
-        .collection(Konstanta.KOLEKSI_PRODUK)
-        .where(Konstanta.KUNCI_DIPUBLIKASIKAN, isEqualTo: true)
-        .orderBy(Konstanta.KUNCI_DIBUAT_PADA, descending: true)
-        .limit(BATAS_HALAMAN);
-  }
-
-  Future<List<Produk>> ambilHalamanPertama() async {
-    final snap = await _filterDasar().get();
-    return snap.docs.map((d) => Produk.fromMap(d.id, d.data())).toList();
-  }
-
-  Future<List<Produk>> ambilHalamanBerikutnya(Produk produkTerakhir) async {
-    try {
-      final snap = await _filterDasar().startAfter([
-        produkTerakhir.dibuatPada,
-      ]).get();
-      return snap.docs.map((d) => Produk.fromMap(d.id, d.data())).toList();
-    } catch (e, t) {
-      LayananLog.error(
-        "Ambil halaman berikutnya gagal, ambil halaman baru",
-        e,
-        t,
+    await _db.runTransaction((transaksi) async {
+      transaksi.set(refProduk, produkBaru.toMapBuatBaru());
+      final refRiwayat = _db.collection(Konstanta.KOLEKSI_RIWAYAT_STOK).doc();
+      transaksi.set(
+        refRiwayat,
+        RiwayatStok(
+          id: refRiwayat.id,
+          idProduk: refProduk.id,
+          jumlahSebelum: 0,
+          jumlahSesudah: produkBaru.stok,
+          perubahan: produkBaru.stok,
+          jenis: JenisPerubahanStok.tambah,
+          alasan: "Stok awal pendaftaran produk",
+          dilakukanOleh: uid,
+          dilakukanOlehNama: namaPengguna,
+          deviceID: deviceID,
+          ipAddress: ipAddress,
+          versiAplikasi: versiAplikasi,
+          waktu: DateTime.now(),
+        ).toMap(),
       );
-      return ambilHalamanPertama();
-    }
+    });
+
+    LayananLog.info("Produk berhasil ditambahkan: ${refProduk.id}");
+    return refProduk.id;
   }
 
-  Stream<List<Produk>> streamProdukPromo() {
-    return _db
-        .collection(Konstanta.KOLEKSI_PRODUK)
-        .where(Konstanta.KUNCI_DIPUBLIKASIKAN, isEqualTo: true)
-        .where(Konstanta.KUNCI_IS_PROMO, isEqualTo: true)
-        .orderBy(Konstanta.KUNCI_TERJUAL, descending: true)
-        .limit(BATAS_HALAMAN)
-        .snapshots()
-        .map(
-          (snap) =>
-              snap.docs.map((d) => Produk.fromMap(d.id, d.data())).toList(),
-        );
-  }
-
-  Stream<List<Produk>> streamProdukTerlaris() {
-    return _db
-        .collection(Konstanta.KOLEKSI_PRODUK)
-        .where(Konstanta.KUNCI_DIPUBLIKASIKAN, isEqualTo: true)
-        .orderBy(Konstanta.KUNCI_TERJUAL, descending: true)
-        .limit(BATAS_HALAMAN)
-        .snapshots()
-        .map(
-          (snap) =>
-              snap.docs.map((d) => Produk.fromMap(d.id, d.data())).toList(),
-        );
-  }
-
-  // ====== PENCARIAN & FILTER ======
-  Future<List<Produk>> cariProduk({
-    String? kataKunci,
-    int? hargaMin,
-    int? hargaMaks,
-    bool? organikSaja,
-    String? idToko,
+  /// ✅ Perbaiki logika: ambil stok lama, hitung jumlah baru, cek perubahan
+  Future<void> ubahStok({
+    required String idProduk,
+    required int jumlahBaru,
+    required JenisPerubahanStok jenis,
+    required String alasan,
+    String? deviceID,
+    String? ipAddress,
+    String versiAplikasi = '1.0.0',
   }) async {
-    Query query = _db
-        .collection(Konstanta.KOLEKSI_PRODUK)
-        .where(Konstanta.KUNCI_DIPUBLIKASIKAN, isEqualTo: true);
+    if (uid.isEmpty) throw Exception("Belum login");
+    if (jumlahBaru < 0) throw Exception("Stok tidak boleh bernilai negatif");
 
-    if (idToko != null)
-      query = query.where(Konstanta.KUNCI_ID_TOKO, isEqualTo: idToko);
-    if (organikSaja == true)
-      query = query.where(Konstanta.KUNCI_IS_ORGANIK, isEqualTo: true);
-    if (hargaMin != null)
-      query = query.where(
-        Konstanta.KUNCI_HARGA,
-        isGreaterThanOrEqualTo: hargaMin,
+    await _db.runTransaction((transaksi) async {
+      final refProduk = _db.collection(Konstanta.KOLEKSI_PRODUK).doc(idProduk);
+      final doc = await transaksi.get(refProduk);
+      if (!doc.exists) throw Exception("Produk tidak ditemukan");
+
+      final dataLama = Produk.fromMap(doc.id, doc.data()!);
+      final jumlahSebelum = dataLama.stok;
+
+      /// ✅ Langsung keluar jika tidak ada perubahan
+      if (jumlahSebelum == jumlahBaru) return;
+
+      transaksi.update(refProduk, {
+        Konstanta.KUNCI_STOK: jumlahBaru,
+        Konstanta.KUNCI_DIUBAH_OLEH: uid,
+        Konstanta.KUNCI_DIPERBARUI_PADA: FieldValue.serverTimestamp(),
+        Konstanta.KUNCI_DEVICE_ID: deviceID,
+        Konstanta.KUNCI_IP_ADDRESS: ipAddress,
+        Konstanta.KUNCI_VERSI_APLIKASI: versiAplikasi,
+      });
+
+      /// ✅ Riwayat dicatat DALAM transaksi, tidak terpisah
+      final refRiwayat = _db.collection(Konstanta.KOLEKSI_RIWAYAT_STOK).doc();
+      transaksi.set(
+        refRiwayat,
+        RiwayatStok(
+          id: refRiwayat.id,
+          idProduk: idProduk,
+          jumlahSebelum: jumlahSebelum,
+          jumlahSesudah: jumlahBaru,
+          perubahan: jumlahBaru - jumlahSebelum,
+          jenis: jenis,
+          alasan: alasan,
+          dilakukanOleh: uid,
+          dilakukanOlehNama: namaPengguna,
+          deviceID: deviceID,
+          ipAddress: ipAddress,
+          versiAplikasi: versiAplikasi,
+          waktu: DateTime.now(),
+        ).toMap(),
       );
-    if (hargaMaks != null)
-      query = query.where(
-        Konstanta.KUNCI_HARGA,
-        isLessThanOrEqualTo: hargaMaks,
-      );
-
-    query = query.limit(50);
-    final snap = await query.get();
-
-    List<Produk> hasil = snap.docs
-        .map((d) => Produk.fromMap(d.id, d.data()))
-        .toList();
-
-    if (kataKunci != null && kataKunci.trim().isNotEmpty) {
-      final kunci = kataKunci.trim().toLowerCase();
-      hasil = hasil
-          .where(
-            (p) =>
-                p.nama.toLowerCase().contains(kunci) ||
-                p.deskripsi.toLowerCase().contains(kunci),
-          )
-          .toList();
-    }
-
-    return hasil;
+    });
   }
 
-  // ====== REVIEW & PENILAIAN ======
-  Future<void> kirimReview(String idProduk, ReviewProduk review) async {
-    if (uid.isEmpty) return;
-    if (!review.apakahValid())
-      throw Exception("Ulasan tidak valid: Bintang 1-5 & minimal 5 karakter");
-
-    try {
-      // Gunakan ID otomatis jika review.id kosong
-      final refReview = _db
-          .collection(Konstanta.KOLEKSI_PRODUK)
-          .doc(idProduk)
-          .collection(Konstanta.KOLEKSI_REVIEW)
-          .doc(review.id.trim().isEmpty ? null : review.id);
-
-      await refReview.set(review.toMap());
-    } catch (e, t) {
-      LayananLog.error("Kirim review gagal", e, t);
-      rethrow;
-    }
-  }
-
-  Stream<List<ReviewProduk>> streamReview(String idProduk) {
-    return _db
-        .collection(Konstanta.KOLEKSI_PRODUK)
-        .doc(idProduk)
-        .collection(Konstanta.KOLEKSI_REVIEW)
-        .orderBy(Konstanta.KUNCI_DIBUAT_ULASAN, descending: true)
-        .limit(BATAS_HALAMAN)
-        .snapshots()
-        .map(
-          (snap) => snap.docs
-              .map((d) => ReviewProduk.fromMap(d.id, d.data()))
-              .toList(),
-        );
-  }
-
-  // ====== TANYA JAWAB ======
-  Future<void> tanyaProduk(String idProduk, TanyaJawab tanya) async {
-    if (uid.isEmpty) return;
-    try {
-      await _db
-          .collection(Konstanta.KOLEKSI_PRODUK)
-          .doc(idProduk)
-          .collection(Konstanta.KOLEKSI_TANYA_JAWAB)
-          .doc()
-          .set(tanya.toMapTanya());
-    } catch (e, t) {
-      LayananLog.error("Kirim pertanyaan gagal", e, t);
-      rethrow;
-    }
-  }
-
-  Future<void> jawabPertanyaan(
+  /// ✅ Perbaiki bug besar: kurangi dari stok lama, bukan set negatif
+  Future<void> kurangiStokOtomatis(
     String idProduk,
-    String idTanya,
-    String jawaban,
-    String namaPenjawab,
-  ) async {
-    if (uid.isEmpty) return;
-    try {
-      await _db
-          .collection(Konstanta.KOLEKSI_PRODUK)
-          .doc(idProduk)
-          .collection(Konstanta.KOLEKSI_TANYA_JAWAB)
-          .doc(idTanya)
-          .update(
-            TanyaJawab(
-                  id: idTanya,
-                  pertanyaan: '',
-                  namaPenanya: '',
-                  tglTanya: DateTime.now(),
-                )
-                .copyWith(jawaban: jawaban, namaPenjawab: namaPenjawab)
-                .toMapJawab(),
-          );
-    } catch (e, t) {
-      LayananLog.error("Kirim jawaban gagal", e, t);
-      rethrow;
-    }
+    int jumlahTerjual, {
+    String? deviceID,
+    String? ipAddress,
+    String versiAplikasi = '1.0.0',
+  }) async {
+    await _db.runTransaction((transaksi) async {
+      final refProduk = _db.collection(Konstanta.KOLEKSI_PRODUK).doc(idProduk);
+      final doc = await transaksi.get(refProduk);
+      if (!doc.exists)
+        throw Exception(
+          "Produk $idProduk tidak ditemukan saat pengurangan stok",
+        );
+
+      final stokSekarang = (doc.data()?[Konstanta.KUNCI_STOK] ?? 0) as int;
+      if (stokSekarang < jumlahTerjual)
+        throw Exception("Stok tidak cukup untuk produk $idProduk");
+
+      final stokBaru = stokSekarang - jumlahTerjual;
+      transaksi.update(refProduk, {Konstanta.KUNCI_STOK: stokBaru});
+
+      final refRiwayat = _db.collection(Konstanta.KOLEKSI_RIWAYAT_STOK).doc();
+      transaksi.set(
+        refRiwayat,
+        RiwayatStok(
+          id: refRiwayat.id,
+          idProduk: idProduk,
+          jumlahSebelum: stokSekarang,
+          jumlahSesudah: stokBaru,
+          perubahan: -jumlahTerjual,
+          jenis: JenisPerubahanStok.terjual,
+          alasan: "Terjual dalam transaksi",
+          dilakukanOleh: uid,
+          dilakukanOlehNama: 'Sistem',
+          deviceID: deviceID,
+          ipAddress: ipAddress,
+          versiAplikasi: versiAplikasi,
+          waktu: DateTime.now(),
+        ).toMap(),
+      );
+    });
   }
 
-  Stream<List<TanyaJawab>> streamTanyaJawab(String idProduk) {
+  Future<void> perbaruiProduk(
+    Produk produk, {
+    String? deviceID,
+    String? ipAddress,
+    String versiAplikasi = '1.0.0',
+  }) async {
+    if (uid.isEmpty) throw Exception("Belum login");
+    if (!produk.apakahValid()) throw Exception("Data produk tidak valid");
+
+    await _db.collection(Konstanta.KOLEKSI_PRODUK).doc(produk.id).update({
+      ...produk.toMapUpdate(),
+      Konstanta.KUNCI_DIUBAH_OLEH: uid,
+      Konstanta.KUNCI_DEVICE_ID: deviceID,
+      Konstanta.KUNCI_IP_ADDRESS: ipAddress,
+      Konstanta.KUNCI_VERSI_APLIKASI: versiAplikasi,
+    });
+  }
+
+  /// ✅ Siap untuk Paginasi, tidak batasi keras 100 saja
+  Query<Produk> queryProduk({bool hanyaAktif = true}) {
+    Query query = _db.collection(Konstanta.KOLEKSI_PRODUK);
+    if (hanyaAktif)
+      query = query.where(Konstanta.KUNCI_STATUS_AKTIF, isEqualTo: true);
+    return query
+        .orderBy(Konstanta.KUNCI_DIBUAT_PADA, descending: true)
+        .withConverter<Produk>(
+          fromFirestore: (s, _) => Produk.fromMap(s.id, s.data()!),
+          toFirestore: (p, _) => p.toMapUmum(),
+        );
+  }
+
+  Stream<List<Produk>> streamProdukToko(String idToko) {
     return _db
         .collection(Konstanta.KOLEKSI_PRODUK)
-        .doc(idProduk)
-        .collection(Konstanta.KOLEKSI_TANYA_JAWAB)
-        .orderBy(Konstanta.KUNCI_TGL_TANYA, descending: true)
-        .limit(BATAS_HALAMAN)
+        .where(Konstanta.KUNCI_ID_TOKO, isEqualTo: idToko)
+        .orderBy(Konstanta.KUNCI_DIBUAT_PADA, descending: true)
+        .withConverter<Produk>(
+          fromFirestore: (s, _) => Produk.fromMap(s.id, s.data()!),
+          toFirestore: (p, _) => p.toMapUmum(),
+        )
         .snapshots()
-        .map(
-          (snap) =>
-              snap.docs.map((d) => TanyaJawab.fromMap(d.id, d.data())).toList(),
-        );
+        .map((s) => s.docs.map((d) => d.data()).toList());
+  }
+
+  Stream<List<RiwayatStok>> streamRiwayatStok(String idProduk) {
+    return _db
+        .collection(Konstanta.KOLEKSI_RIWAYAT_STOK)
+        .where(Konstanta.KUNCI_ID_PRODUK, isEqualTo: idProduk)
+        .orderBy('waktu', descending: true)
+        .limit(50)
+        .withConverter<RiwayatStok>(
+          fromFirestore: (s, _) => RiwayatStok.fromMap(s.id, s.data()!),
+          toFirestore: (r, _) => r.toMap(),
+        )
+        .snapshots()
+        .map((s) => s.docs.map((d) => d.data()).toList());
+  }
+
+  Future<Produk?> ambilProduk(String idProduk) async {
+    final doc = await _db
+        .collection(Konstanta.KOLEKSI_PRODUK)
+        .doc(idProduk)
+        .get();
+    return doc.exists ? Produk.fromMap(doc.id, doc.data()!) : null;
   }
 }
