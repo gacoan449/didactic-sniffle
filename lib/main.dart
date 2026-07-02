@@ -6,6 +6,11 @@ import 'config/theme.dart';
 import 'config/routes.dart';
 
 void main() async {
+  await Hive.initFlutter();
+  Hive.registerAdapter(CicilanModelAdapter());
+  Hive.registerAdapter(GudangModelAdapter());
+  Hive.registerAdapter(PeranPenggunaAdapter());
+  Hive.registerAdapter(PengaturanModelAdapter());
 import "services/hive_service.dart";
   WidgetsFlutterBinding.ensureInitialized();
 await LayananHive.inisialisasi();
