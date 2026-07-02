@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/stok_model.dart';
-import '../models/laporan_model.dart'; // ✅ Import JenisAudit
+import '../models/laporan_model.dart';
 import 'laporan_service.dart';
 import 'logger_service.dart';
 
@@ -20,13 +20,13 @@ class LayananStok {
     }
   }
 
-  /// ✅ Pembersihan reservasi kadaluarsa (dijalankan saat aplikasi aktif)
+  /// ✅ Pembersihan reservasi kadaluarsa
   Future<void> bersihkanReservasiKadaluarsa() async {
     try {
       final batas = DateTime.now();
       final snap = await _db
           .collection('reservasi')
-          .where('kadaluarsa', isLessThanOrEqualTo: batas)
+          .where('kadaluarsa', isLessThanOrEqualTo: Timestamp.fromDate(batas))
           .get();
 
       for (final doc in snap.docs) {
@@ -74,7 +74,6 @@ class LayananStok {
         stokSebelum = stok.jumlahSaatIni;
         stokSesudah = stok.jumlahSaatIni + jumlahPerubahan;
 
-        // 🔒 Validasi Lengkap
         if (stokSesudah < 0) throw Exception("Stok tidak mencukupi");
         if (stokSesudah > stok.stokMaksimum)
           throw Exception(
@@ -117,7 +116,7 @@ class LayananStok {
     }
   }
 
-  /// ✅ Batch Update dengan WriteBatch (cepat & atomik)
+  /// ✅ OPTIMASI BATCH: Ambil semua stok SEKALI SAJA pakai Future.wait
   Future<Map<String, bool>> ubahBanyakStok(
     List<Map<String, dynamic>> daftar,
   ) async {
@@ -126,19 +125,37 @@ class LayananStok {
     List<Future> tugasAudit = [];
 
     try {
+      // Ambil semua ID unik
+      final daftarId = daftar
+          .map((e) => e['idProduk'] as String)
+          .toSet()
+          .toList();
+
+      // ✅ Ambil semua data stok SEKALI Jalan, bukan berulang
+      final daftarStok = await Future.wait(daftarId.map((id) => ambilStok(id)));
+
+      final petaStok = <String, StokProduk>{};
+      for (int i = 0; i < daftarId.length; i++) {
+        if (daftarStok[i] != null) {
+          petaStok[daftarId[i]] = daftarStok[i]!;
+        }
+      }
+
+      // Proses batch
       for (final item in daftar) {
         final id = item['idProduk'] as String;
         final jumlah = item['jumlah'] as int;
         final jenis = item['jenis'] as JenisPerubahanStok;
         final keterangan = item['keterangan'] ?? 'Perubahan massal';
 
-        final stokSaatIni = await ambilStok(id);
-        if (stokSaatIni == null) {
+        if (!petaStok.containsKey(id)) {
           hasil[id] = false;
           continue;
         }
 
+        final stokSaatIni = petaStok[id]!;
         final sesudah = stokSaatIni.jumlahSaatIni + jumlah;
+
         if (sesudah < 0 || sesudah > stokSaatIni.stokMaksimum) {
           hasil[id] = false;
           continue;
@@ -210,16 +227,16 @@ class LayananStok {
 
         final stokBaru = stok.copyWith(
           jumlahDireservasi: stok.jumlahDireservasi + jumlah,
-          stokRendah:
-              (stok.jumlahSaatIni - (stok.jumlahDireservasi + jumlah)) <=
-              stok.stokMinimum,
+          stokRendah: stok.jumlahTersedia <= stok.stokMinimum,
         );
 
         tx.set(doc, stokBaru.keMap(), SetOptions(merge: true));
         tx.set(_db.collection('reservasi').doc(idPesanan), {
-          'idProduk': idProduk,
-          'jumlah': jumlah,
-          'kadaluarsa': DateTime.now().add(const Duration(minutes: 15)),
+          'idProduk': idProduk, 'jumlah': jumlah,
+          // ✅ Selalu simpan sebagai Timestamp agar tipe konsisten
+          'kadaluarsa': Timestamp.fromDate(
+            DateTime.now().add(const Duration(minutes: 15)),
+          ),
           'waktu': FieldValue.serverTimestamp(),
         });
 
@@ -236,7 +253,6 @@ class LayananStok {
     }
   }
 
-  /// ✅ Lepas reservasi DENGAN TRANSACTION agar data konsisten
   Future<bool> lepasReservasi(String idPesanan) async {
     bool berhasil = false;
     try {
