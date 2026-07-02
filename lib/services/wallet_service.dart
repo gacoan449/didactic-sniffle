@@ -1,116 +1,101 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/wallet_model.dart';
 import '../models/wallet_transaksi_model.dart';
+import '../models/pengguna_model.dart';
+import '../services/enkripsi_service.dart';
 
 class LayananDompet {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  static const int batasTransferHarian = 10000000; // Rp 10 Juta
 
-  Future<DompetModel> ambilAtauBuat(String penggunaId) async {
-    final ref = _db.collection('dompet').doc(penggunaId);
-    return _db.runTransaction((tx) async {
-      final snap = await tx.get(ref);
-      if (snap.exists) {
-        return DompetModel.dariMap(snap.data()!, penggunaId);
-      }
-      final dompetBaru = DompetModel(
-        penggunaId: penggunaId,
-        saldo: 0,
-        dibuatPada: DateTime.now(),
-      );
-      tx.set(ref, dompetBaru.keMap(), SetOptions(merge: true));
-      return dompetBaru;
-    });
+  Future<int> cekSaldo(String penggunaId) async {
+    final snap = await _db.collection('pengguna').doc(penggunaId).get();
+    if (!snap.exists || snap.data() == null) return 0;
+    return PenggunaModel.dariMap(snap.data()!, snap.id).saldoDompet;
   }
 
-  Future<bool> tambahSaldoAman(
-    String penggunaId,
-    double jumlah,
-    String keterangan, {
-    String? refId,
+  Future<Map<String, dynamic>> transferSaldo({
+    required String dariId,
+    required String keId,
+    required int jumlah,
+    required String pinPengguna,
+    String keterangan = "",
   }) async {
-    if (jumlah <= 0) return false;
-    final dompetRef = _db.collection('dompet').doc(penggunaId);
-    final transaksiRef = _db.collection('dompet_transaksi').doc();
+    if (jumlah < 1000)
+      return {"berhasil": false, "pesan": "Minimal transfer Rp 1.000"};
+    if (dariId == keId)
+      return {
+        "berhasil": false,
+        "pesan": "Tidak bisa transfer ke akun sendiri",
+      };
 
-    return _db.runTransaction((tx) async {
-      final dompetSnap = await tx.get(dompetRef);
-      final saldoSebelum = dompetSnap.exists
-          ? (dompetSnap.data()?['saldo'] as num? ?? 0).toDouble()
-          : 0;
-      final saldoSesudah = saldoSebelum + jumlah;
+    try {
+      return await _db.runTransaction((tx) async {
+        final snapDari = await tx.get(_db.collection('pengguna').doc(dariId));
+        final snapKe = await tx.get(_db.collection('pengguna').doc(keId));
 
-      tx.set(dompetRef, {
-        'saldo': saldoSesudah,
-        'diperbaruiPada': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+        if (!snapDari.exists || !snapKe.exists) {
+          return {"berhasil": false, "pesan": "Akun tujuan tidak ditemukan"};
+        }
 
-      tx.set(
-        transaksiRef,
-        WalletTransaksiModel(
-          id: transaksiRef.id,
-          penggunaId: penggunaId,
-          jenis: JenisTransaksiDompet.isiSaldo,
-          jumlah: jumlah,
-          saldoSebelum: saldoSebelum,
-          saldoSesudah: saldoSesudah,
-          keterangan: keterangan,
-          referensiId: refId,
-          dibuatPada: DateTime.now(),
-        ).keMap(),
-      );
+        final dataDari = PenggunaModel.dariMap(snapDari.data()!, snapDari.id);
+        if (dataDari.saldoDompet < jumlah) {
+          return {"berhasil": false, "pesan": "Saldo tidak mencukupi"};
+        }
 
-      return true;
-    });
+        // Cek PIN
+        final pinBenar = await _db
+            .collection('pengaturan')
+            .doc(dariId)
+            .get()
+            .then((s) {
+              final hash = s.data()?['pinEnkripsi'] as String?;
+              return hash != null && LayananEnkripsi.cekPIN(pinPengguna, hash);
+            });
+        if (!pinBenar) return {"berhasil": false, "pesan": "PIN Salah"};
+
+        // Lakukan perubahan semuanya dalam satu transaksi
+        final refTransaksiKeluar = _db.collection('transaksi_dompet').doc();
+        final refTransaksiMasuk = _db.collection('transaksi_dompet').doc();
+
+        tx.update(snapDari.reference, {
+          "saldoDompet": FieldValue.increment(-jumlah),
+        });
+        tx.update(snapKe.reference, {
+          "saldoDompet": FieldValue.increment(jumlah),
+        });
+
+        tx.set(refTransaksiKeluar, {
+          'penggunaId': dariId,
+          'jenis': 'transferKeluar',
+          'jumlah': jumlah,
+          'keterangan': 'Ke $keId: $keterangan',
+          'dibuatPada': FieldValue.serverTimestamp(),
+        });
+
+        tx.set(refTransaksiMasuk, {
+          'penggunaId': keId,
+          'jenis': 'terimaTransfer',
+          'jumlah': jumlah,
+          'keterangan': 'Dari $dariId: $keterangan',
+          'dibuatPada': FieldValue.serverTimestamp(),
+        });
+
+        return {"berhasil": true, "pesan": "Transfer Berhasil"};
+      });
+    } catch (e) {
+      return {"berhasil": false, "pesan": e.toString()};
+    }
   }
 
-  Future<bool> kurangiSaldoAman(
-    String penggunaId,
-    double jumlah,
-    String keterangan, {
-    String? refId,
+  Future<List<WalletTransaksiModel>> ambilRiwayat(
+    String penggunaId, {
+    int batas = 30,
   }) async {
-    if (jumlah <= 0) return false;
-    final dompetRef = _db.collection('dompet').doc(penggunaId);
-    final transaksiRef = _db.collection('dompet_transaksi').doc();
-
-    return _db.runTransaction((tx) async {
-      final dompetSnap = await tx.get(dompetRef);
-      final saldoSebelum = dompetSnap.exists
-          ? (dompetSnap.data()?['saldo'] as num? ?? 0).toDouble()
-          : 0;
-      if (saldoSebelum < jumlah) return false;
-      final saldoSesudah = saldoSebelum - jumlah;
-
-      tx.set(dompetRef, {
-        'saldo': saldoSesudah,
-        'diperbaruiPada': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-
-      tx.set(
-        transaksiRef,
-        WalletTransaksiModel(
-          id: transaksiRef.id,
-          penggunaId: penggunaId,
-          jenis: JenisTransaksiDompet.bayarPesanan,
-          jumlah: jumlah,
-          saldoSebelum: saldoSebelum,
-          saldoSesudah: saldoSesudah,
-          keterangan: keterangan,
-          referensiId: refId,
-          dibuatPada: DateTime.now(),
-        ).keMap(),
-      );
-
-      return true;
-    });
-  }
-
-  Future<List<WalletTransaksiModel>> ambilRiwayat(String penggunaId) async {
     final snap = await _db
-        .collection('dompet_transaksi')
+        .collection('transaksi_dompet')
         .where('penggunaId', isEqualTo: penggunaId)
         .orderBy('dibuatPada', descending: true)
-        .limit(50)
+        .limit(batas)
         .get();
     return snap.docs
         .map((d) => WalletTransaksiModel.dariMap(d.data(), d.id))

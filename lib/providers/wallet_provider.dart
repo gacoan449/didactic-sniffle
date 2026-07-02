@@ -1,22 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/wallet_model.dart';
-import '../models/wallet_transaksi_model.dart';
 import '../services/wallet_service.dart';
-import 'auth_provider.dart';
+import '../services/pembayaran_service.dart';
+import '../models/wallet_transaksi_model.dart';
 
 final layananDompetProvider = Provider<LayananDompet>((ref) => LayananDompet());
+final layananPembayaranProvider = Provider<LayananPembayaran>(
+  (ref) => LayananPembayaran(),
+);
 
-final dompetSayaProvider = FutureProvider<DompetModel>((ref) async {
-  final pengguna = ref.watch(penggunaSaatIniProvider);
-  if (pengguna == null || pengguna.id.isEmpty)
-    throw 'Silakan masuk akun terlebih dahulu';
-  return ref.read(layananDompetProvider).ambilAtauBuat(pengguna.id);
-});
-
-final riwayatDompetProvider = FutureProvider<List<WalletTransaksiModel>>((
+final saldoDompetProvider = FutureProvider.family<int, String>((
   ref,
+  penggunaId,
 ) async {
-  final pengguna = ref.watch(penggunaSaatIniProvider);
-  if (pengguna == null || pengguna.id.isEmpty) return [];
-  return ref.read(layananDompetProvider).ambilRiwayat(pengguna.id);
+  return ref.watch(layananDompetProvider).cekSaldo(penggunaId);
 });
+
+final riwayatDompetProvider =
+    FutureProvider.family<List<WalletTransaksiModel>, String>((
+      ref,
+      penggunaId,
+    ) async {
+      return ref.watch(layananDompetProvider).ambilRiwayat(penggunaId);
+    });
