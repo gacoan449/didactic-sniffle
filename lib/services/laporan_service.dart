@@ -1,349 +1,179 @@
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:csv/csv.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:rxdart/rxdart.dart';
+import '../config/konstanta.dart';
 import '../models/laporan_model.dart';
+import 'logger_service.dart';
 
-class LayananAudit {
+class LaporanService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  static const int batasPerHalaman = 50;
 
-  Future<void> catatAktivitas(
-    String idAdmin,
-    JenisAudit jenis,
-    String keterangan,
-  ) async {
-    try {
-      await _db.collection('audit_log').add({
-        'idAdmin': idAdmin,
-        'jenis': jenis.name,
-        'keterangan': keterangan,
-        'waktu': FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      print("Gagal catat audit: $e");
-    }
-  }
-}
+  String get _uid => FirebaseAuth.instance.currentUser?.uid ?? '';
 
-class PengaturanAplikasi {
-  final String namaToko;
-  final String alamat;
-  final String kontak;
+  /// Ambil ringkasan laporan REALTIME & EFISIEN
+  Stream<RingkasanLaporan> streamRingkasan(DateTime awal, DateTime akhir) {
+    if (_uid.isEmpty) return Stream.value(_ringkasanKosong(awal, akhir));
 
-  const PengaturanAplikasi({
-    required this.namaToko,
-    required this.alamat,
-    required this.kontak,
-  });
+    final awalTgl = Timestamp.fromDate(
+      DateTime(awal.year, awal.month, awal.day),
+    );
+    final akhirTgl = Timestamp.fromDate(
+      DateTime(akhir.year, akhir.month, akhir.day, 23, 59, 59),
+    );
 
-  factory PengaturanAplikasi.defaultnya() => const PengaturanAplikasi(
-    namaToko: "Petani Desa Berkah",
-    alamat: "Semarang, Jawa Tengah",
-    kontak: "+62 812-xxxx-xxxx",
-  );
-}
+    final streamPesanan = _db
+        .collection(Konstanta.KOLEKSI_PESANAN)
+        .where('idPenjual', isEqualTo: _uid)
+        .where('tanggal', isGreaterThanOrEqualTo: awalTgl)
+        .where('tanggal', isLessThanOrEqualTo: akhirTgl)
+        .snapshots();
 
-class LayananPengaturan {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+    final streamRiwayat = _db
+        .collection(Konstanta.KOLEKSI_RIWAYAT)
+        .where('idPengguna', isEqualTo: _uid)
+        .where('waktu', isGreaterThanOrEqualTo: awalTgl)
+        .where('waktu', isLessThanOrEqualTo: akhirTgl)
+        .snapshots();
 
-  Future<PengaturanAplikasi> ambilPengaturan() async {
-    try {
-      final snap = await _db.collection('pengaturan').doc('umum').get();
-      if (!snap.exists) return PengaturanAplikasi.defaultnya();
-      final d = snap.data()!;
-      return PengaturanAplikasi(
-        namaToko: d['namaToko'] ?? "Petani Desa Berkah",
-        alamat: d['alamat'] ?? "Semarang, Jawa Tengah",
-        kontak: d['kontak'] ?? "+62 812-xxxx-xxxx",
+    /// Gabungkan dua stream dengan tipe jelas
+    return Rx.combineLatest2<
+      QuerySnapshot<Map<String, dynamic>>,
+      QuerySnapshot<Map<String, dynamic>>,
+      RingkasanLaporan
+    >(streamPesanan, streamRiwayat, (snapPesanan, snapRiwayat) {
+      int totalPesanan = snapPesanan.docs.length;
+      int totalSelesai = 0;
+      int totalDibatalkan = 0;
+      int totalPendapatan = 0;
+
+      for (final p in snapPesanan.docs) {
+        final data = p.data();
+        final status = data['status'] as String?;
+        final bayarStatus = data['statusPembayaran'] as String?;
+        final total = data['total'] as int? ?? 0;
+
+        if (status == Konstanta.STATUS_PESANAN_SELESAI &&
+            bayarStatus == Konstanta.STATUS_BAYAR_SELESAI) {
+          totalSelesai++;
+          totalPendapatan += total;
+        } else if (status == Konstanta.STATUS_PESANAN_DIBATALKAN) {
+          totalDibatalkan++;
+        }
+      }
+
+      int totalPengeluaran = 0;
+      for (final r in snapRiwayat.docs) {
+        final jenis = r.data()['jenis'] as String;
+        final jumlah = r.data()['jumlah'] as int;
+        if (_jenisDariString(jenis).isPemasukan == false) {
+          totalPengeluaran += jumlah.abs();
+        }
+      }
+
+      return RingkasanLaporan(
+        totalPesanan: totalPesanan,
+        totalSelesai: totalSelesai,
+        totalDibatalkan: totalDibatalkan,
+        totalPendapatan: totalPendapatan,
+        totalPengeluaran: totalPengeluaran,
+        periodeAwal: awal,
+        periodeAkhir: akhir,
       );
-    } catch (e) {
-      return PengaturanAplikasi.defaultnya();
-    }
-  }
-}
-
-class LayananLaporan {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final _uang = NumberFormat.currency(
-    locale: 'id_ID',
-    symbol: 'Rp ',
-    decimalDigits: 0,
-  );
-  final Map<String, String> _cacheNama = {};
-
-  Future<String> ambilNamaPengguna(String id) async {
-    if (_cacheNama.containsKey(id)) return _cacheNama[id]!;
-    try {
-      final snap = await _db.collection('pengguna').doc(id).get();
-      final nama = snap.data()?['nama'] ?? '-';
-      _cacheNama[id] = nama;
-      return nama;
-    } catch (e) {
-      return '-';
-    }
+    });
   }
 
-  Future<List<PesananLaporan>> ambilPesananLaporan(
-    FilterLaporan filter, {
-    int batas = 50,
-    DocumentSnapshot? mulaiDari,
+  Future<HasilPaginationLaporan> ambilDaftarTransaksi({
+    required DateTime awal,
+    required DateTime akhir,
+    DocumentSnapshot? terakhirDokumen,
   }) async {
+    if (_uid.isEmpty)
+      return const HasilPaginationLaporan(
+        data: [],
+        dokumenTerakhir: null,
+        adaLagi: false,
+      );
     try {
-      Query query = _db
-          .collection('pesanan')
-          .where('tanggal', isGreaterThanOrEqualTo: filter.awal)
-          .where(
-            'tanggal',
-            isLessThanOrEqualTo: filter.akhir.add(const Duration(days: 1)),
-          )
-          .where('status', whereIn: filter.status)
-          .orderBy('tanggal', descending: true)
-          .limit(batas);
+      final awalTgl = Timestamp.fromDate(
+        DateTime(awal.year, awal.month, awal.day),
+      );
+      final akhirTgl = Timestamp.fromDate(
+        DateTime(akhir.year, akhir.month, akhir.day, 23, 59, 59),
+      );
 
-      if (mulaiDari != null) query = query.startAfterDocument(mulaiDari);
+      Query query = _db
+          .collection(Konstanta.KOLEKSI_RIWAYAT)
+          .where('idPengguna', isEqualTo: _uid)
+          .where('waktu', isGreaterThanOrEqualTo: awalTgl)
+          .where('waktu', isLessThanOrEqualTo: akhirTgl)
+          .orderBy('waktu', descending: true)
+          .limit(batasPerHalaman);
+
+      if (terakhirDokumen != null) {
+        query = query.startAfterDocument(terakhirDokumen);
+      }
 
       final snap = await query.get();
-      return snap.docs
-          .map(
-            (d) =>
-                PesananLaporan.dariMap(d.data() as Map<String, dynamic>, d.id),
-          )
-          .toList();
-    } catch (e) {
-      print("Gagal ambil laporan: $e");
-      return [];
-    }
-  }
+      final dokumenTerakhir = snap.docs.isNotEmpty ? snap.docs.last : null;
 
-  RingkasanLaporan hitungRingkasan(List<PesananLaporan> daftar) {
-    int totalPendapatan = 0;
-    int totalLaba = 0;
-    Map<String, int> hitungProduk = {};
-    Map<MetodeBayar, int> hitungBayar = {};
-
-    for (final p in daftar) {
-      totalPendapatan += p.totalBayar;
-      totalLaba += p.hitungTotalLaba();
-      hitungBayar[p.metodeBayar] = (hitungBayar[p.metodeBayar] ?? 0) + 1;
-      for (final item in p.daftarProduk) {
-        hitungProduk[item.namaProduk] =
-            (hitungProduk[item.namaProduk] ?? 0) + item.jumlah;
-      }
-    }
-
-    final urutProduk = hitungProduk.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    return RingkasanLaporan(
-      totalPesanan: daftar.length,
-      totalPendapatan: totalPendapatan,
-      totalLabaBersih: totalLaba,
-      rataRataTransaksi: daftar.isEmpty ? 0 : totalPendapatan ~/ daftar.length,
-      top5Produk: urutProduk.take(5).toList(),
-      ringkasanMetodeBayar: hitungBayar,
-    );
-  }
-
-  Future<File?> buatLaporanPDF(
-    List<PesananLaporan> daftar,
-    RingkasanLaporan ringkasan,
-    FilterLaporan filter,
-    PengaturanAplikasi pengaturan,
-  ) async {
-    try {
-      final pdf = pw.Document();
-      final namaBayar = {
-        MetodeBayar.tunai: "Tunai",
-        MetodeBayar.dompetDesa: "Dompet Desa",
-        MetodeBayar.qris: "QRIS",
-        MetodeBayar.transferBank: "Transfer",
-        MetodeBayar.cod: "COD",
-        MetodeBayar.lainLain: "Lain-lain",
-      };
-
-      pdf.addPage(
-        pw.MultiPage(
-          pageFormat: PdfPageFormat.a4,
-          build: (pw.Context konteks) => [
-            pw.Header(
-              level: 0,
-              child: pw.Column(
-                children: [
-                  pw.Center(
-                    child: pw.Text(
-                      "LAPORAN PENJUALAN",
-                      style: pw.TextStyle(
-                        fontSize: 18,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  pw.SizedBox(height: 4),
-                  pw.Center(
-                    child: pw.Text(
-                      pengaturan.namaToko,
-                      style: const pw.TextStyle(fontSize: 14),
-                    ),
-                  ),
-                  pw.Center(
-                    child: pw.Text(
-                      "${pengaturan.alamat} | ${pengaturan.kontak}",
-                      style: const pw.TextStyle(fontSize: 10),
-                    ),
-                  ),
-                  pw.SizedBox(height: 8),
-                  pw.Text(
-                    "Periode: ${DateFormat('dd/MM/yyyy').format(filter.awal)} s.d ${DateFormat('dd/MM/yyyy').format(filter.akhir)}",
-                  ),
-                  pw.Divider(),
-                ],
-              ),
-            ),
-            pw.Header(
-              child: pw.Text(
-                "📊 RINGKASAN",
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-              ),
-            ),
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Text("Total Pesanan:"),
-                pw.Text("${ringkasan.totalPesanan} transaksi"),
-              ],
-            ),
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Text("Total Pendapatan:"),
-                pw.Text(_uang.format(ringkasan.totalPendapatan)),
-              ],
-            ),
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Text("Total Laba Bersih:"),
-                pw.Text(_uang.format(ringkasan.totalLabaBersih)),
-              ],
-            ),
-            pw.SizedBox(height: 8),
-            pw.Text("Metode Pembayaran:"),
-            ...ringkasan.ringkasanMetodeBayar.entries.map(
-              (e) => pw.Text("- ${namaBayar[e.key]}: ${e.value} transaksi"),
-            ),
-            pw.SizedBox(height: 8),
-            pw.Text("Top 5 Produk Terlaris:"),
-            ...ringkasan.top5Produk.map(
-              (e) => pw.Text("- ${e.key}: ${e.value} unit"),
-            ),
-            pw.SizedBox(height: 16),
-            pw.Header(
-              child: pw.Text(
-                "📋 DETAIL TRANSAKSI",
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-              ),
-            ),
-            pw.Table.fromTextArray(
-              headers: ['Tanggal', 'No Pesanan', 'Total'],
-              data: daftar.map((d) {
-                final noPesanan = d.id.length > 8 ? d.id.substring(0, 8) : d.id;
-                return [
-                  DateFormat('dd/MM/yyyy').format(d.tanggal),
-                  noPesanan,
-                  _uang.format(d.totalBayar),
-                ];
-              }).toList(),
-            ),
-            pw.Spacer(),
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Text(
-                  "Dicetak: ${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())}",
-                ),
-                pw.Text(
-                  "Halaman ${konteks.pageNumber} dari ${konteks.pagesCount}",
-                ),
-              ],
-            ),
-          ],
-        ),
+      return HasilPaginationLaporan(
+        data: snap.docs.map((d) {
+          final data = d.data() as Map<String, dynamic>;
+          final jenisStr = data['jenis'] as String;
+          return ItemLaporanTransaksi(
+            id: d.id,
+            keterangan: data['keterangan'] ?? '-',
+            jumlah: data['jumlah'] as int,
+            tanggal: (data['waktu'] as Timestamp).toDate(),
+            jenis: _jenisDariString(jenisStr),
+          );
+        }).toList(),
+        dokumenTerakhir: dokumenTerakhir,
+        adaLagi: snap.docs.length == batasPerHalaman,
       );
-
-      final direktori = await getTemporaryDirectory();
-      final jalur =
-          "${direktori.path}/Laporan_Penjualan_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf";
-      final berkas = File(jalur);
-      await berkas.writeAsBytes(await pdf.save());
-      return berkas;
-    } catch (e) {
-      print("Gagal buat PDF: $e");
-      return null;
+    } catch (e, t) {
+      LayananLog.error("Ambil daftar transaksi gagal", e, t);
+      return const HasilPaginationLaporan(
+        data: [],
+        dokumenTerakhir: null,
+        adaLagi: false,
+      );
     }
   }
 
-  Future<File?> buatLaporanCSV(List<PesananLaporan> daftar) async {
-    try {
-      List<List<dynamic>> baris = [
-        [
-          'Tanggal',
-          'No Pesanan',
-          'Status',
-          'Nama Pembeli',
-          'Kasir',
-          'Metode Bayar',
-          'Produk',
-          'Jml Produk',
-          'Total Bayar',
-          'Ongkir',
-          'Laba',
-        ],
-      ];
-      for (final d in daftar) {
-        final daftarNamaProduk = d.daftarProduk
-            .map((p) => "\"${p.namaProduk} x${p.jumlah}\"")
-            .join(", ");
-        baris.add([
-          DateFormat('yyyy-MM-dd').format(d.tanggal),
-          d.id,
-          d.status,
-          await ambilNamaPengguna(d.idPembeli),
-          await ambilNamaPengguna(d.idKasir),
-          d.metodeBayar.name,
-          daftarNamaProduk,
-          d.hitungTotalProduk(),
-          d.totalBayar,
-          d.ongkir,
-          d.hitungTotalLaba(),
-        ]);
-      }
-      final csv = const ListToCsvConverter().convert(baris);
-      final direktori = await getTemporaryDirectory();
-      final jalur =
-          "${direktori.path}/Laporan_Penjualan_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv";
-      final berkas = File(jalur);
-      await berkas.writeAsString(csv);
-      return berkas;
-    } catch (e) {
-      print("Gagal buat CSV: $e");
-      return null;
+  JenisTransaksi _jenisDariString(String str) {
+    switch (str) {
+      case 'terimaPembayaran':
+        return JenisTransaksi.terimaPembayaran;
+      case 'bayarPesanan':
+        return JenisTransaksi.bayarPesanan;
+      case 'ditahan':
+        return JenisTransaksi.bayarPesanan;
+      case 'topup':
+        return JenisTransaksi.topup;
+      case 'tarikSaldo':
+        return JenisTransaksi.tarikSaldo;
+      case 'biayaAdmin':
+        return JenisTransaksi.biayaAdmin;
+      case 'refund':
+        return JenisTransaksi.refund;
+      case 'dibatalkan':
+        return JenisTransaksi.saldoDilepas;
+      default:
+        return JenisTransaksi.lainLain;
     }
   }
 
-  Future<bool> bagikanBerkas(File? berkas) async {
-    if (berkas == null || !await berkas.exists()) return false;
-    try {
-      await Share.shareXFiles([
-        XFile(berkas.path),
-      ], text: 'Laporan Penjualan Petani Desa Berkah');
-      return true;
-    } catch (e) {
-      print("Gagal bagikan: $e");
-      return false;
-    }
+  RingkasanLaporan _ringkasanKosong(DateTime awal, DateTime akhir) {
+    return RingkasanLaporan(
+      totalPesanan: 0,
+      totalSelesai: 0,
+      totalDibatalkan: 0,
+      totalPendapatan: 0,
+      totalPengeluaran: 0,
+      periodeAwal: awal,
+      periodeAkhir: akhir,
+    );
   }
 }
