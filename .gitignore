@@ -1,14 +1,24 @@
 # Flutter/Dart
+build/
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
-.packages
 .pub/
-build/
+pubspec.lock
 
-# Android
-android/app/src/main/java/io/flutter/plugins/
-android/key.properties
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
 
-# Lainnya
-*.log
+# OS
+.DS_Store
+Thumbs.db
+
+# Lingkungan rahasia
+.env
+.env.local
+*.key
+*.pem
