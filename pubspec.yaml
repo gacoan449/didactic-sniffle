@@ -40,6 +40,15 @@ dependencies:
   syncfusion_flutter_charts: ^24.1.45
 
 dev_dependencies:
+
+  # Serialization & Freezed (WAJIB)
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.8.1
+
+dev_dependencies:
+  build_runner: ^2.4.6
+  freezed: ^2.4.6
+  json_serializable: ^6.7.1
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.3
