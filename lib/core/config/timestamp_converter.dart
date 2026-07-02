@@ -1,20 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:json_annotation/json_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class TimestampConverter implements JsonConverter<DateTime, dynamic> {
+class TimestampConverter implements JsonConverter<DateTime?, Object?> {
   const TimestampConverter();
 
   @override
-  DateTime fromJson(dynamic json) {
+  DateTime? fromJson(Object? json) {
+    if (json == null) return null;
     if (json is Timestamp) return json.toDate();
-    if (json is String) {
-      try { return DateTime.parse(json); }
-      catch (_) => throw FormatException("Format tanggal tidak valid: $json");
-    }
-    if (json is int) return DateTime.fromMillisecondsSinceEpoch(json);
-    throw ArgumentError("Tipe data tanggal tidak didukung: ${json.runtimeType}");
+    if (json is Map)
+      return Timestamp(json['_seconds'], json['_nanoseconds']).toDate();
+    throw const FormatException("Format tanggal tidak valid");
   }
 
   @override
-  dynamic toJson(DateTime date) => Timestamp.fromDate(date);
+  Object? toJson(DateTime? waktu) {
+    if (waktu == null) return null;
+    return Timestamp.fromDate(waktu);
+  }
 }
