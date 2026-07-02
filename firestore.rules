@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ✅ DOMPET: Pisahkan hak akses jelas
+    match /dompet/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId
+        && !request.resource.data.keys().hasAny(["saldo", "saldoDitahan"]);
+      allow update: if request.auth != null && request.auth.uid == userId
+        && !request.resource.data.keys().hasAny(["saldo", "saldoDitahan"]);
+      allow delete: if false;
+    }
+
+    // ✅ RIWAYAT
+    match /riwayat_dompet/{id} {
+      allow read: if request.auth != null && resource.data.idPengguna == request.auth.uid;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ✅ PESANAN
+    match /pesanan/{idPesanan} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.idPembeli ||
+        request.auth.uid == resource.data.idPenjual
+      );
+      allow create: if request.auth != null 
+        && request.resource.data.idPembeli == request.auth.uid
+        && !request.resource.data.keys().hasAny(["saldo", "statusPembayaran", "idTransaksi"]);
+      allow update: if request.auth != null && (
+        (request.auth.uid == resource.data.idPenjual 
+          && !(request.resource.data.keys().hasAny(["idPembeli", "idPenjual", "total", "statusPembayaran", "idTransaksi"])))
+        || request.auth.uid == resource.data.idPembeli
+      );
+      allow delete: if false;
+    }
+
+    // ✅ PENGGUNA
+    match /pengguna/{userId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ✅ PRODUK
+    match /produk/{id} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.idPenjual == request.auth.uid;
+      allow update: if request.auth != null && request.resource.data.idPenjual == request.auth.uid;
+      allow delete: if request.auth != null && request.resource.data.idPenjual == request.auth.uid;
+    }
+  }
+}
