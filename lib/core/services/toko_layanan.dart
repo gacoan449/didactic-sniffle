@@ -62,7 +62,7 @@ class LayananToko {
       final tokoDenganId = toko.copyWith(id: ref.id, idPemilik: uid);
       await ref.set(tokoDenganId.toCreateMap());
       return ref.id;
-    } catch (e, t) {
+    } catch (e) {
       LayananLog.error("Daftar toko gagal", e);
       rethrow;
     }
@@ -78,7 +78,7 @@ class LayananToko {
           .collection(Konstanta.KOLEKSI_TOKO)
           .doc(idToko)
           .update(toko.toUpdateMap());
-    } catch (e, t) {
+    } catch (e) {
       LayananLog.error("Ubah toko gagal", e);
       rethrow;
     }
@@ -126,7 +126,7 @@ class LayananToko {
           .startAfterDocument(dokumenTerakhir)
           .get();
       return snap.docs;
-    } catch (e, t) {
+    } catch (e) {
       LayananLog.error("Paginasi toko gagal, muat ulang halaman pertama", e);
       return ambilHalamanPertamaDokumen();
     }
@@ -224,7 +224,7 @@ class LayananToko {
         Konstanta.KUNCI_IS_BUKA: status,
         Konstanta.KUNCI_DIPERBARUI_PADA: FieldValue.serverTimestamp(),
       });
-    } catch (e, t) {
+    } catch (e) {
       LayananLog.error("Ubah status buka tutup gagal", e);
       rethrow;
     }
