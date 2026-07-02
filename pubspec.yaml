@@ -1,12 +1,11 @@
 name: petani_desa_berkah
-description: Aplikasi E-Commerce Hasil Tani Petani Desa Berkah
+description: E-Commerce Pertanian Terpadu Petani Desa Berkah
 publish_to: 'none'
 version: 1.0.0+1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
-# ✅ SEMUA DEPENDENSI DITARUH DI SINI, BUKAN DI BAWAH flutter:
 dependencies:
   flutter:
     sdk: flutter
@@ -16,27 +15,43 @@ dependencies:
   firebase_auth: ^4.15.1
   cloud_firestore: ^4.13.6
   firebase_storage: ^11.6.0
+  firebase_messaging: ^14.7.10
+  firebase_app_check: ^0.2.1+8
+  cloud_functions: ^4.6.5
 
-  # Kriptografi & Keamanan
+  # Keamanan & Utilitas
   crypto: ^3.0.3
   convert: ^3.1.1
   encrypt: ^5.0.3
-  pointycastle: ^3.7.3
-
-  # Utilitas
+  local_auth: ^2.1.7
+  json_annotation: ^4.8.1
+  freezed_annotation: ^2.4.1
   intl: ^0.18.1
-  image_picker: ^1.0.7
-  path_provider: ^2.1.1
-  shared_preferences: ^2.2.2
-  connectivity_plus: ^5.0.2
-  device_info_plus: ^9.1.2
+
+  # Fitur Lainnya
+  geolocator: ^10.1.0
+  google_maps_flutter: ^2.5.3
   http: ^1.1.0
+  image_picker: ^1.0.7
+  mobile_scanner: ^3.5.5
+  printing: ^5.11.1
+  pdf: ^3.10.7
+  excel: ^2.1.0
+  syncfusion_flutter_charts: ^24.1.45
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.3
-  flutter_launcher_icons: ^0.13.1
+  build_runner: ^2.4.6
+  freezed: ^2.4.6
+  json_serializable: ^6.7.1
+  mockito: ^5.4.4
+  firebase_auth_mocks: ^0.13.0
+  fake_cloud_firestore: ^2.4.9
+  integration_test:
+    sdk: flutter
+  lcov: ^1.0.1
 
 flutter:
   uses-material-design: true
