@@ -8,12 +8,10 @@ class Konstanta {
   static const String STATUS_PESANAN_SELESAI = 'selesai';
   static const String STATUS_PESANAN_DIBATALKAN = 'dibatalkan';
   static const String STATUS_BAYAR_SELESAI = 'selesai';
-
   // === MODUL AKUN PEMBELI ===
   static const String KOLEKSI_WISHLIST = 'wishlist';
   static const String KOLEKSI_ALAMAT = 'alamat';
   static const String KOLEKSI_VOUCHER = 'voucher';
-
   static const String KUNCI_ID_PRODUK = 'idProduk';
   static const String KUNCI_DITAMBAHKAN = 'ditambahkanPada';
   static const String KUNCI_NAMA_PENERIMA = 'namaPenerima';

@@ -1,249 +1,425 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:hive/hive.dart';
+import '../config/konstanta.dart';
 
-part 'produk_model.g.dart';
-
-enum SatuanProduk { kg, gram, liter, ml, karung, ikat, butir, papan }
-
-@HiveType(typeId: 6)
 class VariasiProduk {
-  @HiveField(0)
+  final String id;
   final String nama;
-  @HiveField(1)
-  final String nilai;
-  @HiveField(2)
-  final double hargaTambahan;
-  @HiveField(3)
   final int stok;
+  final int harga;
+  final String? foto;
 
   const VariasiProduk({
+    required this.id,
     required this.nama,
-    required this.nilai,
-    required this.hargaTambahan,
     required this.stok,
+    required this.harga,
+    this.foto,
   });
-  Map<String, dynamic> keMap() => {
-    'nama': nama,
-    'nilai': nilai,
-    'hargaTambahan': hargaTambahan,
-    'stok': stok,
-  };
-  factory VariasiProduk.dariMap(Map<String, dynamic> m) => VariasiProduk(
-    nama: m['nama'] ?? '',
-    nilai: m['nilai'] ?? '',
-    hargaTambahan: (m['hargaTambahan'] as num?)?.toDouble() ?? 0,
-    stok: (m['stok'] as num?)?.toInt() ?? 0,
-  );
+
+  VariasiProduk copyWith({
+    String? id,
+    String? nama,
+    int? stok,
+    int? harga,
+    String? foto,
+  }) {
+    return VariasiProduk(
+      id: id ?? this.id,
+      nama: nama ?? this.nama,
+      stok: stok ?? this.stok,
+      harga: harga ?? this.harga,
+      foto: foto ?? this.foto,
+    );
+  }
+
+  factory VariasiProduk.fromMap(String id, Map<String, dynamic> data) {
+    return VariasiProduk(
+      id: id,
+      nama: data[Konstanta.KUNCI_NAMA_PRODUK] ?? '',
+      stok: data[Konstanta.KUNCI_STOK] ?? 0,
+      harga: data[Konstanta.KUNCI_HARGA] ?? 0,
+      foto: data[Konstanta.KUNCI_FOTO],
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      Konstanta.KUNCI_NAMA_PRODUK: nama.trim(),
+      Konstanta.KUNCI_STOK: stok,
+      Konstanta.KUNCI_HARGA: harga,
+      Konstanta.KUNCI_FOTO: foto,
+    };
+  }
 }
 
-// ✅ MODEL ULASAN SUDAH ADA DI DALAM FILE INI
-@HiveType(typeId: 7)
-class UlasanProduk {
-  @HiveField(0)
-  final String penggunaId;
-  @HiveField(1)
-  final String namaPengguna;
-  @HiveField(2)
+class ReviewProduk {
+  final String id;
+  final String idPembeli;
+  final String namaPembeli;
   final int bintang;
-  @HiveField(3)
-  final String komentar;
-  @HiveField(4)
-  final List<String> fotoUlasan;
-  @HiveField(5)
+  final String ulasan;
+  final List<String> foto;
+  final List<String> video;
   final DateTime dibuatPada;
 
-  const UlasanProduk({
-    required this.penggunaId,
-    required this.namaPengguna,
+  const ReviewProduk({
+    required this.id,
+    required this.idPembeli,
+    required this.namaPembeli,
     required this.bintang,
-    required this.komentar,
-    required this.fotoUlasan,
+    required this.ulasan,
+    required this.foto,
+    required this.video,
     required this.dibuatPada,
   });
 
-  Map<String, dynamic> keMap() => {
-    'penggunaId': penggunaId,
-    'namaPengguna': namaPengguna,
-    'bintang': bintang,
-    'komentar': komentar,
-    'fotoUlasan': fotoUlasan,
-    'dibuatPada': Timestamp.fromDate(dibuatPada),
-  };
+  ReviewProduk copyWith({
+    String? id,
+    String? idPembeli,
+    String? namaPembeli,
+    int? bintang,
+    String? ulasan,
+    List<String>? foto,
+    List<String>? video,
+    DateTime? dibuatPada,
+  }) {
+    return ReviewProduk(
+      id: id ?? this.id,
+      idPembeli: idPembeli ?? this.idPembeli,
+      namaPembeli: namaPembeli ?? this.namaPembeli,
+      bintang: bintang ?? this.bintang,
+      ulasan: ulasan ?? this.ulasan,
+      foto: foto ?? this.foto,
+      video: video ?? this.video,
+      dibuatPada: dibuatPada ?? this.dibuatPada,
+    );
+  }
 
-  factory UlasanProduk.dariMap(Map<String, dynamic> m) => UlasanProduk(
-    penggunaId: m['penggunaId'] ?? '',
-    namaPengguna: m['namaPengguna'] ?? '',
-    bintang: (m['bintang'] as num?)?.toInt() ?? 0,
-    komentar: m['komentar'] ?? '',
-    fotoUlasan: List<String>.from(m['fotoUlasan'] ?? []),
-    dibuatPada: (m['dibuatPada'] as Timestamp?)?.toDate() ?? DateTime.now(),
-  );
+  factory ReviewProduk.fromMap(String id, Map<String, dynamic> data) {
+    final ts = data[Konstanta.KUNCI_DIBUAT_ULASAN] as Timestamp?;
+    return ReviewProduk(
+      id: id,
+      idPembeli: data[Konstanta.KUNCI_ID_PEMBELI] ?? '',
+      namaPembeli: data[Konstanta.KUNCI_NAMA_PEMBELI] ?? '',
+      bintang: data[Konstanta.KUNCI_BINTANG] ?? 0,
+      ulasan: data[Konstanta.KUNCI_ULASAN] ?? '',
+      foto: List<String>.from(data[Konstanta.KUNCI_FOTO] ?? []),
+      video: List<String>.from(data[Konstanta.KUNCI_VIDEO] ?? []),
+      dibuatPada: ts?.toDate() ?? DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      Konstanta.KUNCI_ID_PEMBELI: idPembeli,
+      Konstanta.KUNCI_NAMA_PEMBELI: namaPembeli,
+      Konstanta.KUNCI_BINTANG: bintang,
+      Konstanta.KUNCI_ULASAN: ulasan.trim(),
+      Konstanta.KUNCI_FOTO: foto,
+      Konstanta.KUNCI_VIDEO: video,
+      Konstanta.KUNCI_DIBUAT_ULASAN: FieldValue.serverTimestamp(),
+    };
+  }
+
+  bool apakahValid() {
+    return bintang >= 1 && bintang <= 5 && ulasan.trim().length >= 5;
+  }
 }
 
-@HiveType(typeId: 8)
-class ProdukModel {
-  @HiveField(0)
+class TanyaJawab {
   final String id;
-  @HiveField(1)
-  final String supplierId;
-  @HiveField(2)
-  final String namaSupplier;
-  @HiveField(3)
-  final String namaProduk;
-  @HiveField(4)
-  final String kodeProduk;
-  @HiveField(5)
-  final String barcode;
-  @HiveField(6)
-  final List<String> urlFoto;
-  @HiveField(7)
-  final String urlVideo;
-  @HiveField(8)
-  final String deskripsi;
-  @HiveField(9)
-  final String spesifikasi;
-  @HiveField(10)
-  final double berat;
-  @HiveField(11)
-  final SatuanProduk satuan;
-  @HiveField(12)
-  final int stok;
-  @HiveField(13)
-  final int stokMinimal;
-  @HiveField(14)
-  final double hargaBeli;
-  @HiveField(15)
-  final double hargaJual;
-  @HiveField(16)
-  final double diskonPersen;
-  @HiveField(17)
-  final double hargaDiskon;
-  @HiveField(18)
-  final bool organik;
-  @HiveField(19)
-  final bool aktif;
-  @HiveField(20)
-  final bool flashSale;
-  @HiveField(21)
-  final bool produkBaru;
-  @HiveField(22)
-  final bool terlaris;
-  @HiveField(23)
-  final double rating;
-  @HiveField(24)
-  final int jumlahUlasan;
-  @HiveField(25)
-  final List<VariasiProduk> variasi;
-  @HiveField(26)
-  final List<UlasanProduk> daftarUlasan;
-  @HiveField(27)
-  final DateTime dibuatPada;
-  @HiveField(28)
-  final DateTime? diperbaruiPada;
+  final String pertanyaan;
+  final String namaPenanya;
+  final DateTime tglTanya;
+  final String? jawaban;
+  final String? namaPenjawab;
+  final DateTime? tglJawab;
 
-  const ProdukModel({
+  const TanyaJawab({
     required this.id,
-    required this.supplierId,
-    required this.namaSupplier,
-    required this.namaProduk,
-    required this.kodeProduk,
-    required this.barcode,
-    required this.urlFoto,
-    required this.urlVideo,
+    required this.pertanyaan,
+    required this.namaPenanya,
+    required this.tglTanya,
+    this.jawaban,
+    this.namaPenjawab,
+    this.tglJawab,
+  });
+
+  TanyaJawab copyWith({
+    String? id,
+    String? pertanyaan,
+    String? namaPenanya,
+    DateTime? tglTanya,
+    String? jawaban,
+    String? namaPenjawab,
+    DateTime? tglJawab,
+  }) {
+    return TanyaJawab(
+      id: id ?? this.id,
+      pertanyaan: pertanyaan ?? this.pertanyaan,
+      namaPenanya: namaPenanya ?? this.namaPenanya,
+      tglTanya: tglTanya ?? this.tglTanya,
+      jawaban: jawaban ?? this.jawaban,
+      namaPenjawab: namaPenjawab ?? this.namaPenjawab,
+      tglJawab: tglJawab ?? this.tglJawab,
+    );
+  }
+
+  factory TanyaJawab.fromMap(String id, Map<String, dynamic> data) {
+    final tanyaTs = data[Konstanta.KUNCI_TGL_TANYA] as Timestamp?;
+    final jawabTs = data[Konstanta.KUNCI_TGL_JAWAB] as Timestamp?;
+    return TanyaJawab(
+      id: id,
+      pertanyaan: data[Konstanta.KUNCI_PERTANYAAN] ?? '',
+      namaPenanya: data[Konstanta.KUNCI_NAMA_PENANYA] ?? '',
+      tglTanya: tanyaTs?.toDate() ?? DateTime.now(),
+      jawaban: data[Konstanta.KUNCI_JAWABAN],
+      namaPenjawab: data[Konstanta.KUNCI_NAMA_PENJAWAB],
+      tglJawab: jawabTs?.toDate(),
+    );
+  }
+
+  Map<String, dynamic> toMapTanya() {
+    return {
+      Konstanta.KUNCI_PERTANYAAN: pertanyaan.trim(),
+      Konstanta.KUNCI_NAMA_PENANYA: namaPenanya,
+      Konstanta.KUNCI_TGL_TANYA: FieldValue.serverTimestamp(),
+    };
+  }
+
+  Map<String, dynamic> toMapJawab() {
+    return {
+      Konstanta.KUNCI_JAWABAN: jawaban?.trim(),
+      Konstanta.KUNCI_NAMA_PENJAWAB: namaPenjawab,
+      Konstanta.KUNCI_TGL_JAWAB: FieldValue.serverTimestamp(),
+    };
+  }
+}
+
+class Produk {
+  final String id;
+  final String idToko;
+  final String nama;
+  final String deskripsi;
+  final Map<String, String> spesifikasi;
+  final List<String> foto;
+  final List<String> video;
+  final double berat;
+  final String satuan;
+  final int stok;
+  final int harga;
+  final int hargaDiskon;
+  final bool organik;
+  final bool promo;
+  final bool flashSale;
+  final bool produkBaru;
+  final int terjual;
+  final double rating;
+  final int jumlahRating;
+  final List<VariasiProduk> variasi;
+  final bool dipublikasikan;
+  final DateTime dibuatPada;
+  final DateTime? diperbaruiPada;
+  final DateTime? dihapusPada;
+  final String? dihapusOleh;
+
+  const Produk({
+    required this.id,
+    required this.idToko,
+    required this.nama,
     required this.deskripsi,
     required this.spesifikasi,
+    required this.foto,
+    required this.video,
     required this.berat,
     required this.satuan,
     required this.stok,
-    required this.stokMinimal,
-    required this.hargaBeli,
-    required this.hargaJual,
-    required this.diskonPersen,
+    required this.harga,
     required this.hargaDiskon,
     required this.organik,
-    required this.aktif,
+    required this.promo,
     required this.flashSale,
     required this.produkBaru,
-    required this.terlaris,
+    required this.terjual,
     required this.rating,
-    required this.jumlahUlasan,
+    required this.jumlahRating,
     required this.variasi,
-    required this.daftarUlasan,
+    required this.dipublikasikan,
     required this.dibuatPada,
     this.diperbaruiPada,
+    this.dihapusPada,
+    this.dihapusOleh,
   });
 
-  Map<String, dynamic> keMap() => {
-    'supplierId': supplierId,
-    'namaSupplier': namaSupplier,
-    'namaProduk': namaProduk,
-    'kodeProduk': kodeProduk,
-    'barcode': barcode,
-    'urlFoto': urlFoto,
-    'urlVideo': urlVideo,
-    'deskripsi': deskripsi,
-    'spesifikasi': spesifikasi,
-    'berat': berat,
-    'satuan': satuan.name,
-    'stok': stok,
-    'stokMinimal': stokMinimal,
-    'hargaBeli': hargaBeli,
-    'hargaJual': hargaJual,
-    'diskonPersen': diskonPersen,
-    'hargaDiskon': hargaDiskon,
-    'organik': organik,
-    'aktif': aktif,
-    'flashSale': flashSale,
-    'produkBaru': produkBaru,
-    'terlaris': terlaris,
-    'rating': rating,
-    'jumlahUlasan': jumlahUlasan,
-    'variasi': variasi.map((v) => v.keMap()).toList(),
-    'daftarUlasan': daftarUlasan.map((u) => u.keMap()).toList(),
-    'dibuatPada': Timestamp.fromDate(dibuatPada),
-    'diperbaruiPada': diperbaruiPada == null
-        ? null
-        : Timestamp.fromDate(diperbaruiPada!),
-  };
+  /// Map aman untuk penghapusan lunak (statis agar tidak perlu buat objek kosong)
+  static Map<String, dynamic> softDeleteMap(String uidPenghapus) {
+    return {
+      Konstanta.KUNCI_DIPUBLIKASIKAN: false,
+      Konstanta.KUNCI_DIHAPUS_PADA: FieldValue.serverTimestamp(),
+      Konstanta.KUNCI_DIHAPUS_OLEH: uidPenghapus,
+    };
+  }
 
-  // ✅ SUDAH ADA METODE dariMap DENGAN BENAR
-  factory ProdukModel.dariMap(Map<String, dynamic> m, String docId) =>
-      ProdukModel(
-        id: docId,
-        supplierId: m['supplierId'] ?? '',
-        namaSupplier: m['namaSupplier'] ?? '',
-        namaProduk: m['namaProduk'] ?? '',
-        kodeProduk: m['kodeProduk'] ?? '',
-        barcode: m['barcode'] ?? '',
-        urlFoto: List<String>.from(m['urlFoto'] ?? []),
-        urlVideo: m['urlVideo'] ?? '',
-        deskripsi: m['deskripsi'] ?? '',
-        spesifikasi: m['spesifikasi'] ?? '',
-        berat: (m['berat'] as num?)?.toDouble() ?? 0,
-        satuan: SatuanProduk.values.firstWhere(
-          (e) => e.name == m['satuan'],
-          orElse: () => SatuanProduk.kg,
-        ),
-        stok: (m['stok'] as num?)?.toInt() ?? 0,
-        stokMinimal: (m['stokMinimal'] as num?)?.toInt() ?? 5,
-        hargaBeli: (m['hargaBeli'] as num?)?.toDouble() ?? 0,
-        hargaJual: (m['hargaJual'] as num?)?.toDouble() ?? 0,
-        diskonPersen: (m['diskonPersen'] as num?)?.toDouble() ?? 0,
-        hargaDiskon: (m['hargaDiskon'] as num?)?.toDouble() ?? 0,
-        organik: m['organik'] == true,
-        aktif: m['aktif'] == true,
-        flashSale: m['flashSale'] == true,
-        produkBaru: m['produkBaru'] == true,
-        terlaris: m['terlaris'] == true,
-        rating: (m['rating'] as num?)?.toDouble() ?? 0,
-        jumlahUlasan: (m['jumlahUlasan'] as num?)?.toInt() ?? 0,
-        variasi: List<VariasiProduk>.from(
-          (m['variasi'] ?? []).map((x) => VariasiProduk.dariMap(x)),
-        ),
-        daftarUlasan: List<UlasanProduk>.from(
-          (m['daftarUlasan'] ?? []).map((x) => UlasanProduk.dariMap(x)),
-        ),
-        dibuatPada: (m['dibuatPada'] as Timestamp?)?.toDate() ?? DateTime.now(),
-        diperbaruiPada: (m['diperbaruiPada'] as Timestamp?)?.toDate(),
-      );
+  Produk copyWith({
+    String? id,
+    String? idToko,
+    String? nama,
+    String? deskripsi,
+    Map<String, String>? spesifikasi,
+    List<String>? foto,
+    List<String>? video,
+    double? berat,
+    String? satuan,
+    int? stok,
+    int? harga,
+    int? hargaDiskon,
+    bool? organik,
+    bool? promo,
+    bool? flashSale,
+    bool? produkBaru,
+    int? terjual,
+    double? rating,
+    int? jumlahRating,
+    List<VariasiProduk>? variasi,
+    bool? dipublikasikan,
+    DateTime? dibuatPada,
+    DateTime? diperbaruiPada,
+    DateTime? dihapusPada,
+    String? dihapusOleh,
+  }) {
+    return Produk(
+      id: id ?? this.id,
+      idToko: idToko ?? this.idToko,
+      nama: nama ?? this.nama,
+      deskripsi: deskripsi ?? this.deskripsi,
+      spesifikasi: spesifikasi ?? this.spesifikasi,
+      foto: foto ?? this.foto,
+      video: video ?? this.video,
+      berat: berat ?? this.berat,
+      satuan: satuan ?? this.satuan,
+      stok: stok ?? this.stok,
+      harga: harga ?? this.harga,
+      hargaDiskon: hargaDiskon ?? this.hargaDiskon,
+      organik: organik ?? this.organik,
+      promo: promo ?? this.promo,
+      flashSale: flashSale ?? this.flashSale,
+      produkBaru: produkBaru ?? this.produkBaru,
+      terjual: terjual ?? this.terjual,
+      rating: rating ?? this.rating,
+      jumlahRating: jumlahRating ?? this.jumlahRating,
+      variasi: variasi ?? this.variasi,
+      dipublikasikan: dipublikasikan ?? this.dipublikasikan,
+      dibuatPada: dibuatPada ?? this.dibuatPada,
+      diperbaruiPada: diperbaruiPada ?? this.diperbaruiPada,
+      dihapusPada: dihapusPada ?? this.dihapusPada,
+      dihapusOleh: dihapusOleh ?? this.dihapusOleh,
+    );
+  }
+
+  factory Produk.fromMap(String id, Map<String, dynamic> data) {
+    final tsBuat = data[Konstanta.KUNCI_DIBUAT_PADA] as Timestamp?;
+    final tsUbah = data[Konstanta.KUNCI_DIPERBARUI_PADA] as Timestamp?;
+    final tsHapus = data[Konstanta.KUNCI_DIHAPUS_PADA] as Timestamp?;
+    final listVariasi = data[Konstanta.KOLEKSI_VARIASI] as List? ?? [];
+
+    return Produk(
+      id: id,
+      idToko: data[Konstanta.KUNCI_ID_TOKO] ?? '',
+      nama: data[Konstanta.KUNCI_NAMA_PRODUK] ?? '',
+      deskripsi: data[Konstanta.KUNCI_DESKRIPSI] ?? '',
+      spesifikasi: Map<String, String>.from(
+        data[Konstanta.KUNCI_SPESIFIKASI] ?? {},
+      ),
+      foto: List<String>.from(data[Konstanta.KUNCI_FOTO] ?? []),
+      video: List<String>.from(data[Konstanta.KUNCI_VIDEO] ?? []),
+      berat: (data[Konstanta.KUNCI_BERAT] ?? 0).toDouble(),
+      satuan: data[Konstanta.KUNCI_SATUAN] ?? 'kg',
+      stok: data[Konstanta.KUNCI_STOK] ?? 0,
+      harga: data[Konstanta.KUNCI_HARGA] ?? 0,
+      hargaDiskon: data[Konstanta.KUNCI_HARGA_DISKON] ?? 0,
+      organik: data[Konstanta.KUNCI_IS_ORGANIK] ?? false,
+      promo: data[Konstanta.KUNCI_IS_PROMO] ?? false,
+      flashSale: data[Konstanta.KUNCI_IS_FLASH_SALE] ?? false,
+      produkBaru: data[Konstanta.KUNCI_IS_PRODUK_BARU] ?? false,
+      terjual: data[Konstanta.KUNCI_TERJUAL] ?? 0,
+      rating: (data[Konstanta.KUNCI_RATING] ?? 0).toDouble(),
+      jumlahRating: data[Konstanta.KUNCI_JUMLAH_RATING] ?? 0,
+      variasi: listVariasi
+          .asMap()
+          .entries
+          .map((e) => VariasiProduk.fromMap(e.key.toString(), e.value))
+          .toList(),
+      dipublikasikan: data[Konstanta.KUNCI_DIPUBLIKASIKAN] ?? true,
+      dibuatPada: tsBuat?.toDate() ?? DateTime.now(),
+      diperbaruiPada: tsUbah?.toDate(),
+      dihapusPada: tsHapus?.toDate(),
+      dihapusOleh: data[Konstanta.KUNCI_DIHAPUS_OLEH],
+    );
+  }
+
+  Map<String, dynamic> toCreateMap() {
+    return {
+      Konstanta.KUNCI_ID: id,
+      Konstanta.KUNCI_ID_TOKO: idToko,
+      Konstanta.KUNCI_NAMA_PRODUK: nama.trim(),
+      Konstanta.KUNCI_DESKRIPSI: deskripsi.trim(),
+      Konstanta.KUNCI_SPESIFIKASI: spesifikasi,
+      Konstanta.KUNCI_FOTO: foto,
+      Konstanta.KUNCI_VIDEO: video,
+      Konstanta.KUNCI_BERAT: berat,
+      Konstanta.KUNCI_SATUAN: satuan,
+      Konstanta.KUNCI_STOK: stok,
+      Konstanta.KUNCI_HARGA: harga,
+      Konstanta.KUNCI_HARGA_DISKON: hargaDiskon,
+      Konstanta.KUNCI_IS_ORGANIK: organik,
+      Konstanta.KUNCI_IS_PROMO: promo,
+      Konstanta.KUNCI_IS_FLASH_SALE: flashSale,
+      Konstanta.KUNCI_IS_PRODUK_BARU: produkBaru,
+      Konstanta.KUNCI_TERJUAL: terjual,
+      Konstanta.KUNCI_RATING: rating,
+      Konstanta.KUNCI_JUMLAH_RATING: jumlahRating,
+      Konstanta.KOLEKSI_VARIASI: variasi.map((v) => v.toMap()).toList(),
+      Konstanta.KUNCI_DIPUBLIKASIKAN: dipublikasikan,
+      Konstanta.KUNCI_DIBUAT_PADA: FieldValue.serverTimestamp(),
+    };
+  }
+
+  Map<String, dynamic> toUpdateMap() {
+    return {
+      Konstanta.KUNCI_NAMA_PRODUK: nama.trim(),
+      Konstanta.KUNCI_DESKRIPSI: deskripsi.trim(),
+      Konstanta.KUNCI_SPESIFIKASI: spesifikasi,
+      Konstanta.KUNCI_FOTO: foto,
+      Konstanta.KUNCI_VIDEO: video,
+      Konstanta.KUNCI_BERAT: berat,
+      Konstanta.KUNCI_SATUAN: satuan,
+      Konstanta.KUNCI_STOK: stok,
+      Konstanta.KUNCI_HARGA: harga,
+      Konstanta.KUNCI_HARGA_DISKON: hargaDiskon,
+      Konstanta.KUNCI_IS_ORGANIK: organik,
+      Konstanta.KUNCI_IS_PROMO: promo,
+      Konstanta.KUNCI_IS_FLASH_SALE: flashSale,
+      Konstanta.KUNCI_IS_PRODUK_BARU: produkBaru,
+      Konstanta.KOLEKSI_VARIASI: variasi.map((v) => v.toMap()).toList(),
+      Konstanta.KUNCI_DIPUBLIKASIKAN: dipublikasikan,
+      Konstanta.KUNCI_DIPERBARUI_PADA: FieldValue.serverTimestamp(),
+    };
+  }
+
+  /// Validasi data produk lengkap
+  bool apakahValid() {
+    return nama.trim().length >= 5 &&
+        nama.trim().length <= 100 &&
+        deskripsi.trim().length >= 20 &&
+        foto.isNotEmpty &&
+        foto.length <= 10 &&
+        video.length <= 3 &&
+        harga > 0 &&
+        (hargaDiskon == 0 || hargaDiskon <= harga) &&
+        stok >= 0 &&
+        berat > 0;
+  }
+
+  /// Harga yang ditampilkan (diskon jika ada)
+  int get hargaTampil => promo && hargaDiskon > 0 ? hargaDiskon : harga;
 }
