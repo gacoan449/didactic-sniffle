@@ -1,0 +1,69 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ==============================================
+    // Fungsi Bantuan
+    // ==============================================
+    function isAuthenticated() { return request.auth != null; }
+    function getUid() { return request.auth.uid; }
+    function isAdmin() { return request.auth.token.admin == true; }
+    function isActive() {
+      let user = get(/databases/$(database)/documents/pengguna/$(getUid())).data;
+      return user.statusAkun == "aktif";
+    }
+    function isPemilikToko(idToko) {
+      let toko = get(/databases/$(database)/documents/toko/$(idToko)).data;
+      return toko.idPemilik == getUid() || isAdmin();
+    }
+
+    // ==============================================
+    // Gambar Produk
+    // ==============================================
+    match /produk/{idToko}/{namaBerkas} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isActive()
+        && isPemilikToko(idToko)
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp)');
+    }
+
+    // ==============================================
+    // Foto Profil Pengguna
+    // ==============================================
+    match /profil/{uid}/{namaBerkas} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isActive() && getUid() == uid
+        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp)');
+    }
+
+    // ==============================================
+    // Bukti Transaksi & Pengiriman
+    // ==============================================
+    match /transaksi/{idTransaksi}/{namaBerkas} {
+      allow read: if isAuthenticated() && isActive()
+        && (
+          get(/databases/$(database)/documents/transaksi/$(idTransaksi)).data.idPembeli == getUid()
+          || isPemilikToko(get(/databases/$(database)/documents/transaksi/$(idTransaksi)).data.idToko)
+          || isAdmin()
+        );
+      
+      allow write: if isAuthenticated() && isActive()
+        && (
+          get(/databases/$(database)/documents/transaksi/$(idTransaksi)).data.idPembeli == getUid()
+          || isPemilikToko(get(/databases/$(database)/documents/transaksi/$(idTransaksi)).data.idToko)
+          || isAdmin()
+        )
+        && request.resource.size < 3 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp)');
+    }
+
+    // ==============================================
+    // LAINNYA DITOLAK
+    // ==============================================
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

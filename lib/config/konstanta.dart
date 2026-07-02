@@ -95,3 +95,55 @@ class Konstanta {
   static const String KUNCI_DITERIMA_PADA = 'diterimaPada';
   static const String KUNCI_DIBATALKAN_PADA = 'dibatalkanPada';
 }
+
+// === PERAN TAMBAHAN ===
+static const String PERAN_KASIR = 'kasir';
+static const String PERAN_SOPIR = 'sopir';
+static const String PERAN_KURIR = 'kurir';
+static const String PERAN_GUDANG = 'gudang';
+static const String PERAN_OWNER = 'owner';
+
+// === MODUL KERANJANG & CHECKOUT ===
+static const String KUNCI_VOUCHER = 'voucher';
+static const String KUNCI_CATATAN = 'catatan';
+static const String KUNCI_SIMPAN_NANTI = 'simpanNanti';
+static const String KUNCI_ALAMAT_PENGIRIMAN = 'alamatPengiriman';
+static const String KUNCI_KURIR = 'kurir';
+static const String KUNCI_JADWAL_KIRIM = 'jadwalKirim';
+static const String KUNCI_ONGKIR = 'ongkir';
+static const String KUNCI_ASURANSI = 'asuransi';
+
+// === MODUL PEMBAYARAN ===
+static const String KUNCI_METODE_BAYAR = 'metodeBayar';
+static const String METODE_TRANSFER = 'transfer';
+static const String METODE_VA = 'virtual_akun';
+static const String METODE_QRIS = 'qris';
+static const String METODE_COD = 'cod';
+static const String METODE_SALDO = 'saldo';
+static const String METODE_CICILAN = 'cicilan';
+
+// === MODUL DOMPET & KREDIT ===
+static const String KOLEKSI_DOMPET = 'dompet';
+static const String KOLEKSI_MUTASI = 'mutasi';
+static const String KOLEKSI_KREDIT = 'kredit';
+static const String KOLEKSI_TAGIHAN = 'tagihan';
+
+// === MODUL MITRA & PENGIRIMAN ===
+static const String KOLEKSI_SOPIR = 'sopir';
+static const String KOLEKSI_KURIR = 'kurir';
+static const String KOLEKSI_RIWAYAT_PERJALANAN = 'riwayatPerjalanan';
+static const String KOLEKSI_LOKASI = 'lokasi';
+
+// === MODUL GUDANG & KASIR ===
+static const String KOLEKSI_BARANG_MASUK = 'barangMasuk';
+static const String KOLEKSI_BARANG_KELUAR = 'barangKeluar';
+static const String KOLEKSI_KAS = 'kas';
+static const String KOLEKSI_LAPORAN_KAS = 'laporanKas';
+
+// === MODUL LAINNYA ===
+static const String KOLEKSI_WISHLIST = 'wishlist';
+static const String KOLEKSI_VOUCHER_PENGGUNA = 'voucherPengguna';
+static const String KOLEKSI_CHAT = 'chat';
+static const String KOLEKSI_PESAN = 'pesan';
+static const String KOLEKSI_NOTIFIKASI = 'notifikasi';
+static const String KOLEKSI_LOG_AKTIVITAS = 'logAktivitas';

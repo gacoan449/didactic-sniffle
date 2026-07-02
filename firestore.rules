@@ -1,56 +1,290 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // ✅ DOMPET: Pisahkan hak akses jelas
-    match /dompet/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId
-        && !request.resource.data.keys().hasAny(["saldo", "saldoDitahan"]);
-      allow update: if request.auth != null && request.auth.uid == userId
-        && !request.resource.data.keys().hasAny(["saldo", "saldoDitahan"]);
-      allow delete: if false;
+
+    // ==============================================
+    // FUNGSI BANTUAN: DIOPTIMASI & TIDAK PANGGIL GET BERLEBIHAN
+    // ==============================================
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    // ✅ RIWAYAT
-    match /riwayat_dompet/{id} {
-      allow read: if request.auth != null && resource.data.idPengguna == request.auth.uid;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+    function getUid() {
+      return request.auth.uid;
     }
 
-    // ✅ PESANAN
-    match /pesanan/{idPesanan} {
-      allow read: if request.auth != null && (
-        request.auth.uid == resource.data.idPembeli ||
-        request.auth.uid == resource.data.idPenjual
+    // ✅ GUNAKAN CUSTOM CLAIMS UNTUK ADMIN (lebih aman dari field Firestore)
+    function isAdmin() {
+      return request.auth.token.admin == true;
+    }
+
+    function isActive() {
+      let user = get(/databases/$(database)/documents/pengguna/$(getUid())).data;
+      return user.statusAkun == "aktif";
+    }
+
+    function isPenjual() {
+      let user = get(/databases/$(database)/documents/pengguna/$(getUid())).data;
+      return user.peran in ["penjual", "supplier"] || isAdmin();
+    }
+
+    function getTokoDariIdToko(idToko) {
+      return get(/databases/$(database)/documents/toko/$(idToko)).data;
+    }
+
+    function getTokoDariProduk(idProduk) {
+      let produk = get(/databases/$(database)/documents/produk/$(idProduk)).data;
+      return getTokoDariIdToko(produk.idToko);
+    }
+
+    function isPemilikToko(idToko) {
+      let toko = getTokoDariIdToko(idToko);
+      return toko.idPemilik == getUid() || isAdmin();
+    }
+
+    function isPemilikProduk(idProduk) {
+      let produk = get(/databases/$(database)/documents/produk/$(idProduk)).data;
+      return isPemilikToko(produk.idToko);
+    }
+
+    // ✅ Regex sesuai standar Firestore Rules, mendukung nomor HP Indonesia
+    function isValidNoHP(no) {
+      return no.matches(r'^08[0-9]{9,13}$') || no.matches(r'^628[0-9]{9,13}$');
+    }
+
+    // ==============================================
+    // 1. PENGGUNA
+    // ==============================================
+    match /pengguna/{uid} {
+      allow read: if isAuthenticated() && (getUid() == uid || isAdmin());
+      
+      allow create: if isAuthenticated() && getUid() == uid
+        && request.resource.data.keys().hasAll(["namaLengkap", "noHP", "peran"])
+        && isValidNoHP(request.resource.data.noHP)
+        && request.resource.data.peran in ["pembeli", "penjual", "supplier"]
+        && request.resource.data.statusAkun == "aktif";
+
+      allow update: if isAuthenticated() && isActive()
+        && (getUid() == uid || isAdmin())
+        && (!("peran" in request.writeFields) || isAdmin())
+        && (!("statusAkun" in request.writeFields) || isAdmin())
+        && (!("noHP" in request.writeFields) || isValidNoHP(request.resource.data.noHP));
+
+      allow delete: if isAdmin();
+    }
+
+    // ==============================================
+    // 2. TOKO
+    // ==============================================
+    match /toko/{idToko} {
+      allow read: if isAuthenticated() && isActive();
+      
+      allow create: if isAuthenticated() && isActive() && isPenjual()
+        && request.resource.data.idPemilik == getUid();
+
+      allow update, delete: if isAuthenticated() && isActive()
+        && (getTokoDariIdToko(idToko).idPemilik == getUid() || isAdmin());
+    }
+
+    // ==============================================
+    // 3. PRODUK: BISA DIBACA PUBLIK (tanpa login)
+    // ==============================================
+    match /produk/{idProduk} {
+      // ✅ Katalog terbuka untuk semua, belum login pun bisa lihat
+      allow read: if resource.data.statusAktif == true;
+      allow read: if isAuthenticated() && isPemilikProduk(idProduk);
+      
+      allow create: if isAuthenticated() && isActive()
+        && isPemilikToko(request.resource.data.idToko)
+        && request.resource.data.hargaSatuan > 0
+        && request.resource.data.stok >= 0
+        && request.resource.data.daftarGambar.size() > 0;
+
+      allow update: if isAuthenticated() && isActive()
+        && isPemilikToko(resource.data.idToko)
+        && !("dibuatPada" in request.writeFields)
+        && !("dibuatOleh" in request.writeFields);
+
+      allow delete: if isAuthenticated() && isActive()
+        && isPemilikToko(resource.data.idToko) && resource.data.stok == 0;
+    }
+
+    // ==============================================
+    // 4. RIWAYAT STOK: TIDAK BISA DIUBAH/HAPUS
+    // ==============================================
+    match /riwayatStok/{idRiwayat} {
+      allow read: if isAuthenticated() && isActive() && isPemilikProduk(resource.data.idProduk);
+      
+      allow create: if isAuthenticated() && isActive()
+        && (isPemilikProduk(request.resource.data.idProduk) || request.resource.data.dilakukanOleh == "Sistem");
+
+      allow update, delete: if false;
+    }
+
+    // ==============================================
+    // 5. KERANJANG
+    // ==============================================
+    match /keranjang/{uidPengguna}/item/{idItem} {
+      allow read, write: if isAuthenticated() && isActive() && getUid() == uidPengguna;
+    }
+
+    // ==============================================
+    // 6. TRANSAKSI: PEMAKAIAN writeFields YANG BENAR
+    // ==============================================
+    match /transaksi/{idTransaksi} {
+      allow read: if isAuthenticated() && isActive()
+        && (resource.data.idPembeli == getUid() 
+            || isPemilikToko(resource.data.idToko) 
+            || isAdmin());
+
+      allow create: if isAuthenticated() && isActive()
+        && request.resource.data.idPembeli == getUid()
+        && request.resource.data.totalBayar > 0
+        && request.resource.data.daftarSnapshot.size() > 0
+        && request.resource.data.otpTerverifikasi == false;
+
+      allow update: if isAuthenticated() && isActive() && (
+        // Pembeli hanya boleh ubah field tertentu
+        (resource.data.idPembeli == getUid() 
+          && request.writeFields.hasAny(["otpTerverifikasi", "percobaanOTPGagal", "diubahOleh", "dibatalkanPada", "statusPembayaran", "riwayatStatus"]))
+        
+        // Penjual/Admin boleh ubah status pengiriman & pembayaran
+        || (isPemilikToko(resource.data.idToko) 
+          && !request.writeFields.hasAny(["noInvoice", "idPembeli", "daftarSnapshot"]))
+
+        // Admin boleh ubah semua kecuali hapus riwayat harga
+        || isAdmin()
       );
-      allow create: if request.auth != null 
-        && request.resource.data.idPembeli == request.auth.uid
-        && !request.resource.data.keys().hasAny(["saldo", "statusPembayaran", "idTransaksi"]);
-      allow update: if request.auth != null && (
-        (request.auth.uid == resource.data.idPenjual 
-          && !(request.resource.data.keys().hasAny(["idPembeli", "idPenjual", "total", "statusPembayaran", "idTransaksi"])))
-        || request.auth.uid == resource.data.idPembeli
-      );
-      allow delete: if false;
+
+      // ✅ Pakai nama field yang benar: dibuatPada
+      allow delete: if isAdmin() && resource.data.dibuatPada < request.time - 30d;
     }
 
-    // ✅ PENGGUNA
-    match /pengguna/{userId} {
-      allow read: if true;
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow update: if request.auth != null && request.auth.uid == userId;
-      allow delete: if request.auth != null && request.auth.uid == userId;
+    // ==============================================
+    // 7. DATA SISTEM
+    // ==============================================
+    match /sistem/{dokumen} {
+      allow read, write: if isAdmin();
     }
 
-    // ✅ PRODUK
-    match /produk/{id} {
-      allow read: if true;
-      allow create: if request.auth != null && request.resource.data.idPenjual == request.auth.uid;
-      allow update: if request.auth != null && request.resource.data.idPenjual == request.auth.uid;
-      allow delete: if request.auth != null && request.resource.data.idPenjual == request.auth.uid;
+    // ==============================================
+    // TOLAK SEMUA AKSES LAINNYA
+    // ==============================================
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
+
+    // ==============================================
+    // FUNGSI PERAN TAMBAHAN
+    // ==============================================
+    function isKasir() {
+      let user = get(/databases/$(database)/documents/pengguna/$(getUid())).data;
+      return user.peran == "kasir" || isAdmin();
+    }
+
+    function isMitraPengiriman() {
+      let user = get(/databases/$(database)/documents/pengguna/$(getUid())).data;
+      return user.peran in ["sopir", "kurir"] || isAdmin();
+    }
+
+    function isPetugasGudang() {
+      let user = get(/databases/$(database)/documents/pengguna/$(getUid())).data;
+      return user.peran == "gudang" || isAdmin();
+    }
+
+    function isOwner() {
+      return request.auth.token.owner == true || isAdmin();
+    }
+
+    // ==============================================
+    // WISHLIST & VOUCHER
+    // ==============================================
+    match /wishlist/{uidPengguna}/produk/{idProduk} {
+      allow read, write: if isAuthenticated() && isActive() && getUid() == uidPengguna;
+    }
+
+    match /voucherPengguna/{uidPengguna}/{idVoucher} {
+      allow read, write: if isAuthenticated() && isActive() && getUid() == uidPengguna;
+    }
+
+    // ==============================================
+    // DOMPET & MUTASI
+    // ==============================================
+    match /dompet/{uidPengguna} {
+      allow read: if isAuthenticated() && isActive() && getUid() == uidPengguna || isAdmin();
+      allow update: if isAuthenticated() && isActive() && (
+        getUid() == uidPengguna 
+        || request.resource.data.keys().hasOnly(["saldo"]) && isAdmin()
+      );
+    }
+
+    match /mutasi/{idMutasi} {
+      allow read: if isAuthenticated() && isActive() && (
+        resource.data.idPengguna == getUid() || isAdmin()
+      );
+      allow create: if isAuthenticated() && isActive();
+      allow update, delete: if false;
+    }
+
+    // ==============================================
+    // KASIR & KAS
+    // ==============================================
+    match /kas/{idToko} {
+      allow read, write: if isAuthenticated() && isActive() && (
+        isKasir() || isPemilikToko(idToko)
+      );
+    }
+
+    // ==============================================
+    // SOPIR & KURIR
+    // ==============================================
+    match /sopir/{uid} {
+      allow read: if isAuthenticated() && isActive() && (getUid() == uid || isAdmin() || isOwner());
+      allow update: if isAuthenticated() && isActive() && (getUid() == uid || isAdmin());
+    }
+
+    match /kurir/{uid} {
+      allow read: if isAuthenticated() && isActive() && (getUid() == uid || isAdmin() || isOwner());
+      allow update: if isAuthenticated() && isActive() && (getUid() == uid || isAdmin());
+    }
+
+    // ==============================================
+    // GUDANG
+    // ==============================================
+    match /barangMasuk/{id} {
+      allow read: if isAuthenticated() && isActive() && (isPetugasGudang() || isAdmin() || isOwner());
+      allow create: if isAuthenticated() && isActive() && isPetugasGudang();
+    }
+
+    match /barangKeluar/{id} {
+      allow read: if isAuthenticated() && isActive() && (isPetugasGudang() || isAdmin() || isOwner());
+      allow create: if isAuthenticated() && isActive() && isPetugasGudang();
+    }
+
+    // ==============================================
+    // CHAT & PESAN
+    // ==============================================
+    match /chat/{idChat} {
+      allow read, write: if isAuthenticated() && isActive() && (
+        getUid() in resource.data.daftarAnggota || isAdmin()
+      );
+    }
+
+    match /pesan/{idPesan} {
+      allow read: if isAuthenticated() && isActive() && (
+        getUid() in get(/databases/$(database)/documents/chat/$(resource.data.idChat)).data.daftarAnggota
+      );
+      allow create: if isAuthenticated() && isActive() && request.resource.data.pengirim == getUid();
+      allow update: if isAuthenticated() && isActive() && request.resource.data.pengirim == getUid() && request.writeFields.hasOnly(["dibaca"]);
+    }
+
+    // ==============================================
+    // LOG AKTIVITAS
+    // ==============================================
+    match /logAktivitas/{idLog} {
+      allow read: if isAuthenticated() && (isAdmin() || isOwner());
+      allow create: if true;
+      allow update, delete: if false;
+    }

@@ -1,84 +1,45 @@
-name: petanidesaberkah
-description: Marketplace Hasil Tani Versi Enterprise - Petani Desa Berkah
+name: petani_desa_berkah
+description: Aplikasi E-Commerce Hasil Tani Petani Desa Berkah
+publish_to: 'none'
 version: 1.0.0+1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
+# ✅ SEMUA DEPENDENSI DITARUH DI SINI, BUKAN DI BAWAH flutter:
 dependencies:
   flutter:
     sdk: flutter
 
-  firebase_core: ^2.30.0
-  firebase_auth: ^4.19.0
-  cloud_firestore: ^4.17.0
-  firebase_storage: ^11.7.0
-  firebase_messaging: ^14.8.0
-  firebase_app_check: ^0.2.2
+  # Firebase Inti
+  firebase_core: ^2.24.2
+  firebase_auth: ^4.15.1
+  cloud_firestore: ^4.13.6
+  firebase_storage: ^11.6.0
 
-  flutter_riverpod: ^2.3.0
-  cached_network_image: ^3.3.1
-  pull_to_refresh: ^2.0.0
-  cupertino_icons: ^1.0.8
+  # Kriptografi & Keamanan
+  crypto: ^3.0.3
+  convert: ^3.1.1
+  encrypt: ^5.0.3
+  pointycastle: ^3.7.3
 
+  # Utilitas
+  intl: ^0.18.1
+  image_picker: ^1.0.7
+  path_provider: ^2.1.1
+  shared_preferences: ^2.2.2
   connectivity_plus: ^5.0.2
-  geolocator: ^11.0.0
-  permission_handler: ^11.3.1
-  share_plus: ^9.0.0
-  local_auth: ^2.2.0
-  image_picker: ^1.1.0
-  file_picker: ^8.0.0
-
-  intl: ^0.19.0
-  flutter_svg: ^2.0.10
-  flutter_form_builder: ^9.2.1
-  form_builder_validators: ^9.1.0
-  pdf: ^3.10.8
-  excel: ^4.0.3
-  flutter_local_notifications: ^17.1.2
-  timezone: ^0.9.2
-  flutter_localizations:
-    sdk: flutter
-
-  go_router: ^13.0.0
-  dio: ^5.4.0
-  pretty_dio_logger: ^1.3.1
-  flutter_dotenv: ^5.1.0
-  get_it: ^7.6.0
-  logger: ^2.0.0
+  device_info_plus: ^9.1.2
+  http: ^1.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
-  integration_test:
-    sdk: flutter
-  flutterfire_cli: ^0.2.7
-
-dependency_overrides:
+  flutter_lints: ^2.0.3
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
-
   assets:
     - assets/images/
     - assets/icons/
-    - assets/banner/
-    - assets/category/
-    - assets/logo/
-    - assets/fonts/
-    - assets/l10n/
-
-  fonts:
-    - family: Poppins
-      fonts:
-        - asset: assets/fonts/Poppins-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/Poppins-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Poppins-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Poppins-Bold.ttf
-          weight: 700
-  crypto: ^3.0.3
-  convert: ^3.1.1
