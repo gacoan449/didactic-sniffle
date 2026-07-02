@@ -80,3 +80,5 @@ flutter:
           weight: 600
         - asset: assets/fonts/Poppins-Bold.ttf
           weight: 700
+  crypto: ^3.0.3
+  convert: ^3.1.1

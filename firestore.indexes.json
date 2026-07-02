@@ -1,46 +1,20 @@
 {
   "indexes": [
     {
-      "collectionGroup": "toko",
+      "collectionGroup": "transaksi",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "statusVerifikasi", "order": "ASCENDING" },
-        { "fieldPath": "bergabungPada", "order": "DESCENDING" }
+        { "fieldPath": "idPembeli", "order": "ASCENDING" },
+        { "fieldPath": "dipesanPada", "order": "DESCENDING" }
       ]
     },
     {
-      "collectionGroup": "toko",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "idPemilik", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "toko",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "statusVerifikasi", "order": "ASCENDING" },
-        { "fieldPath": "supplierResmi", "order": "ASCENDING" },
-        { "fieldPath": "ratingToko", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "toko",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "statusVerifikasi", "order": "ASCENDING" },
-        { "fieldPath": "provinsi", "order": "ASCENDING" },
-        { "fieldPath": "kabupaten", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "produk",
+      "collectionGroup": "transaksi",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "idToko", "order": "ASCENDING" },
-        { "fieldPath": "dibuatPada", "order": "DESCENDING" }
+        { "fieldPath": "dipesanPada", "order": "DESCENDING" }
       ]
     }
-  ],
-  "fieldOverrides": []
+  ]
 }
